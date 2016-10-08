@@ -42,6 +42,7 @@
 #define SARG_ERR_OTHER        -2
 #define SARG_ERR_INVALARG     -3
 
+#define _SARG_UNUSED(e) ((void) e)
 #define _SARG_IS_SHORT_ARG(s) (s[0] == '-' && s[1] != '-')
 #define _SARG_IS_LONG_ARG(s) (s[0] == '-' && s[1] == '-')
 #define _SARG_IS_HEX_NUM(s) (s[0] == '0' && s[1] == 'x')
@@ -52,10 +53,11 @@ typedef enum _sarg_type {
 	UINT,
 	DOUBLE,
 	BOOL,
-	STRING
+	STRING,
+	COUNT
 } sarg_type;
 
-typedef struct _smarg_argument {
+typedef struct _sarg_argument {
 	char *short_name;
 	char *long_name;
 	char *help;
@@ -153,11 +155,75 @@ int _sarg_get_number_base(const char *arg)
     return base;
 }
 
+int _sarg_parse_int(char *arg, sarg_result *res)
+{
+    int base;
+    char *endptr;
+    base = _sarg_get_number_base(arg);
+
+    // convert and check if conversion succeeded
+    res->int_val = strtol(arg, &endptr, base);
+    if(*endptr != '\0')
+        return SARG_ERR_INVALARG;
+
+    return SARG_ERR_SUCCESS;
+}
+
+int _sarg_parse_uint(char *arg, sarg_result *res)
+{
+    int base;
+    char *endptr;
+    base = _sarg_get_number_base(arg);
+
+    // convert and check if conversion succeeded
+    res.uint_val = strtoul(arg, &endptr, base);
+    if(*endptr != '\0')
+        return SARG_ERR_INVALARG;
+
+    return SARG_ERR_SUCCESS;
+}
+
+int _sarg_parse_double(char *arg, sarg_result *res)
+{
+    char *endptr;
+
+    res.double_val = strtod(arg, &endptr);
+    if(*endptr != '\0')
+        return SARG_ERR_INVALARG;
+
+    return SARG_ERR_SUCCESS;
+}
+
+int _sarg_parse_bool(char *arg, sarg_result *res)
+{
+    _SARG_UNUSED(arg);
+    ++res.bool_val;
+
+    return SARG_ERR_SUCCESS;
+}
+
+int _sarg_parse_str(char *arg, sarg_result *res)
+{
+    res.str_val = malloc(strlen(arg) + 1);
+    if(!res.str_val)
+        return SARG_ERR_OTHER;
+    strcpy(res.str_val, arg);
+
+    return SARG_ERR_SUCCESS;
+}
+
+typedef int (*_sarg_parse_func)(char*, sarg_result*);
+static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
+        _sarg_parse_int,
+        _sarg_parse_uint,
+        _sarg_parse_double,
+        _sarg_parse_bool,
+        _sarg_parse_str
+};
+
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
 {
-    int i, arg_idx, len, base;
-    char *endptr;
-    char short_arg[2];
+    int i, arg_idx, len, ret;
 
     // reset results
     for (i = 0; i < root->res_len; ++i) {
@@ -179,45 +245,17 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
             if(arg_idx < 0)
                 return SARG_ERR_INVALARG;
 
-            switch(root->args[arg_idx].type) {
-            case INT:
-                base = _sarg_get_number_base(argv[i+1]);
-
-                // convert and check if conversion succeeded
-                root->results[arg_idx].int_val = strtol(argv[i+1], &endptr, base);
-                if(*endptr != '\0')
+            if(root->args[arg_idx].type != BOOL)
+            {
+                ++i;
+                if(i >= argc)
                     return SARG_ERR_INVALARG;
-
-                break;
-            case UINT:
-                base = _sarg_get_number_base(argv[i+1]);
-
-                // convert and check if conversion succeeded
-                root->results[arg_idx].uint_val = strtoul(argv[i+1], &endptr, base);
-                if(*endptr != '\0')
-                    return SARG_ERR_INVALARG;
-
-                break;
-            case DOUBLE:
-                root->results[arg_idx].double_val = strtod(argv[i+1], &endptr);
-                if(*endptr != '\0')
-                    return SARG_ERR_INVALARG;
-
-                break;
-            case BOOL:
-                ++root->results[arg_idx].bool_val;
-
-                break;
-            case STRING:
-                root->results[arg_idx].str_val = malloc(strlen(argv[i+1]) + 1);
-                if(!root->results[arg_idx].str_val)
-                    return SARG_ERR_OTHER;
-                strcpy(root->results[arg_idx].str_val, argv[i+1]);
-
-                break;
-            default:
-                return SARG_ERR_INVALARG;
             }
+
+            ret = _sarg_parse_funcs[root->args[arg_idx].type](
+                    argv[i], &root->results[arg_idx]);
+            if(ret != SARG_ERR_SUCCESS)
+                return ret;
         }
     }
 
