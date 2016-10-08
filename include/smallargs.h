@@ -41,6 +41,9 @@
 #define SARG_ERR_ERRNO        -1
 #define SARG_ERR_OTHER        -2
 #define SARG_ERR_INVALARG     -3
+#define SARG_ERR_PARSE        -4
+#define SARG_ERR_NOTFOUND     -5
+#define SARG_ERR_ALLOC     -5
 
 #define _SARG_UNUSED(e) ((void) e)
 #define _SARG_IS_SHORT_ARG(s) (s[0] == '-' && s[1] != '-')
@@ -54,6 +57,7 @@ typedef enum _sarg_type {
 	DOUBLE,
 	BOOL,
 	STRING,
+	LIST,
 	COUNT
 } sarg_type;
 
@@ -66,6 +70,7 @@ typedef struct _sarg_argument {
 
 typedef struct _sarg_result {
     sarg_type type;
+    int is_set;
     union {
         int int_val;
         unsigned int uint_val;
@@ -101,7 +106,7 @@ int sarg_init(sarg_root *root, sarg_argument *arguments, const int len)
     // init and copy arguments
     root->args = malloc(sizeof(sarg_argument) * len);
     if(root->args == NULL)
-        return SARG_ERR_OTHER;
+        return SARG_ERR_ALLOC;
 
     memcpy(root->args, arguments, sizeof(sarg_argument) * len);
     root->arg_len = len;
@@ -110,7 +115,7 @@ int sarg_init(sarg_root *root, sarg_argument *arguments, const int len)
     root->results = malloc(sizeof(sarg_result) * len);
     if(root->args == NULL) {
         free(root->args);
-        return SARG_ERR_OTHER;
+        return SARG_ERR_ALLOC;
     }
     root->res_len = len;
 
@@ -123,14 +128,15 @@ int sarg_init(sarg_root *root, sarg_argument *arguments, const int len)
 
 int _sarg_find_arg(sarg_root *root, char *name)
 {
-    int i;
+    int i, is_short, is_long;
+
     while(name[0] == '-')
         ++name;
 
     for(i = 0; i < root->arg_len; ++i)
     {
-        int is_short = root.args[i].short_name && strcmp(root.args[i].short_name) == 0;
-        int is_long = root.args[i].long_name && strcmp(root.args[i].long_name) == 0;
+        is_short = root.args[i].short_name && strcmp(root.args[i].short_name) == 0;
+        is_long = root.args[i].long_name && strcmp(root.args[i].long_name) == 0;
         if (is_short || is_long)
             return i;
     }
@@ -155,7 +161,7 @@ int _sarg_get_number_base(const char *arg)
     return base;
 }
 
-int _sarg_parse_int(char *arg, sarg_result *res)
+int _sarg_parse_int(const char *arg, sarg_result *res)
 {
     int base;
     char *endptr;
@@ -164,12 +170,12 @@ int _sarg_parse_int(char *arg, sarg_result *res)
     // convert and check if conversion succeeded
     res->int_val = strtol(arg, &endptr, base);
     if(*endptr != '\0')
-        return SARG_ERR_INVALARG;
+        return SARG_ERR_PARSE;
 
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_parse_uint(char *arg, sarg_result *res)
+int _sarg_parse_uint(const char *arg, sarg_result *res)
 {
     int base;
     char *endptr;
@@ -178,23 +184,23 @@ int _sarg_parse_uint(char *arg, sarg_result *res)
     // convert and check if conversion succeeded
     res.uint_val = strtoul(arg, &endptr, base);
     if(*endptr != '\0')
-        return SARG_ERR_INVALARG;
+        return SARG_ERR_PARSE;
 
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_parse_double(char *arg, sarg_result *res)
+int _sarg_parse_double(const char *arg, sarg_result *res)
 {
     char *endptr;
 
     res.double_val = strtod(arg, &endptr);
     if(*endptr != '\0')
-        return SARG_ERR_INVALARG;
+        return SARG_ERR_PARSE;
 
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_parse_bool(char *arg, sarg_result *res)
+int _sarg_parse_bool(const char *arg, sarg_result *res)
 {
     _SARG_UNUSED(arg);
     ++res.bool_val;
@@ -202,23 +208,29 @@ int _sarg_parse_bool(char *arg, sarg_result *res)
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_parse_str(char *arg, sarg_result *res)
+int _sarg_parse_str(const char *arg, sarg_result *res)
 {
     res.str_val = malloc(strlen(arg) + 1);
     if(!res.str_val)
-        return SARG_ERR_OTHER;
+        return SARG_ERR_ALLOC;
     strcpy(res.str_val, arg);
 
     return SARG_ERR_SUCCESS;
 }
 
-typedef int (*_sarg_parse_func)(char*, sarg_result*);
+int _sarg_parse_list(const char *arg, sarg_result *res)
+{
+    return SARG_ERR_SUCCESS;
+}
+
+typedef int (*_sarg_parse_func)(const char*, sarg_result*);
 static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
         _sarg_parse_int,
         _sarg_parse_uint,
         _sarg_parse_double,
         _sarg_parse_bool,
-        _sarg_parse_str
+        _sarg_parse_str,
+        _sarg_parse_list
 };
 
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
@@ -236,28 +248,43 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
         // argument has to have at least 2 chars
         len = strlen(argv[i]);
         if(len < 2)
-            return SARG_ERR_INVALARG;
+            return SARG_ERR_PARSE;
 
         if(_SARG_IS_SHORT_ARG(argv[i]) || _SARG_IS_LONG_ARG(argv[i]))
         {
             // find argument
             arg_idx = _sarg_find_arg(root, argv[i]);
             if(arg_idx < 0)
-                return SARG_ERR_INVALARG;
+                return SARG_ERR_NOTFOUND;
 
             if(root->args[arg_idx].type != BOOL)
             {
                 ++i;
                 if(i >= argc)
-                    return SARG_ERR_INVALARG;
+                    return SARG_ERR_PARSE;
             }
 
             ret = _sarg_parse_funcs[root->args[arg_idx].type](
                     argv[i], &root->results[arg_idx]);
             if(ret != SARG_ERR_SUCCESS)
                 return ret;
+
+            root->results[arg_idx].is_set = 1;
         }
     }
+
+    return SARG_ERR_SUCCESS;
+}
+
+int sarg_get(sarg_root *root, const char *name, sarg_result **res)
+{
+    int arg_idx;
+
+    arg_idx = _sarg_find_arg(root, name);
+    if(arg_idx < 0)
+        return SARG_ERR_NOTFOUND;
+
+    *res = &root->results[arg_idx];
 
     return SARG_ERR_SUCCESS;
 }
