@@ -34,6 +34,8 @@
 #define INCLUDE_SMALLARGS_H_
 
 #include <stddef.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define SARG_VERSION "0.1"
 
@@ -89,8 +91,8 @@ typedef struct _sarg_root {
 
 void _sarg_result_init(sarg_result *res, sarg_type type)
 {
-    memset(res, 0, sizeof(res));
-    res.type = type;
+    memset(res, 0, sizeof(sarg_result));
+    res->type = type;
 }
 
 void _sarg_result_destroy(sarg_result *res)
@@ -126,17 +128,18 @@ int sarg_init(sarg_root *root, sarg_argument *arguments, const int len)
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_find_arg(sarg_root *root, char *name)
+int _sarg_find_arg(sarg_root *root, const char *name)
 {
     int i, is_short, is_long;
+    char *namep = (char*) name;
 
-    while(name[0] == '-')
-        ++name;
+    while(namep[0] == '-')
+        ++namep;
 
     for(i = 0; i < root->arg_len; ++i)
     {
-        is_short = root.args[i].short_name && strcmp(root.args[i].short_name) == 0;
-        is_long = root.args[i].long_name && strcmp(root.args[i].long_name) == 0;
+        is_short = root->args[i].short_name && strcmp(namep, root->args[i].short_name) == 0;
+        is_long = root->args[i].long_name && strcmp(namep, root->args[i].long_name) == 0;
         if (is_short || is_long)
             return i;
     }
@@ -182,7 +185,7 @@ int _sarg_parse_uint(const char *arg, sarg_result *res)
     base = _sarg_get_number_base(arg);
 
     // convert and check if conversion succeeded
-    res.uint_val = strtoul(arg, &endptr, base);
+    res->uint_val = strtoul(arg, &endptr, base);
     if(*endptr != '\0')
         return SARG_ERR_PARSE;
 
@@ -193,7 +196,7 @@ int _sarg_parse_double(const char *arg, sarg_result *res)
 {
     char *endptr;
 
-    res.double_val = strtod(arg, &endptr);
+    res->double_val = strtod(arg, &endptr);
     if(*endptr != '\0')
         return SARG_ERR_PARSE;
 
@@ -203,17 +206,17 @@ int _sarg_parse_double(const char *arg, sarg_result *res)
 int _sarg_parse_bool(const char *arg, sarg_result *res)
 {
     _SARG_UNUSED(arg);
-    ++res.bool_val;
+    ++res->bool_val;
 
     return SARG_ERR_SUCCESS;
 }
 
 int _sarg_parse_str(const char *arg, sarg_result *res)
 {
-    res.str_val = malloc(strlen(arg) + 1);
-    if(!res.str_val)
+    res->str_val = malloc(strlen(arg) + 1);
+    if(!res->str_val)
         return SARG_ERR_ALLOC;
-    strcpy(res.str_val, arg);
+    strcpy(res->str_val, arg);
 
     return SARG_ERR_SUCCESS;
 }
