@@ -51,7 +51,7 @@
 #define _SARG_IS_SHORT_ARG(s) (s[0] == '-' && s[1] != '-')
 #define _SARG_IS_LONG_ARG(s) (s[0] == '-' && s[1] == '-')
 #define _SARG_IS_HEX_NUM(s) (s[0] == '0' && s[1] == 'x')
-#define _SARG_IS_OCT_NUM(s) (s[0] == '0' && s[1] == 'o')
+#define _SARG_IS_OCT_NUM(s) (s[0] == '0' && strchr("1234567", s[1]) != NULL)
 
 typedef enum _sarg_type {
 	INT = 0,
@@ -59,7 +59,6 @@ typedef enum _sarg_type {
 	DOUBLE,
 	BOOL,
 	STRING,
-	LIST,
 	COUNT
 } sarg_type;
 
@@ -72,7 +71,7 @@ typedef struct _sarg_argument {
 
 typedef struct _sarg_result {
     sarg_type type;
-    int is_set;
+    int count;
     union {
         int int_val;
         unsigned int uint_val;
@@ -98,7 +97,10 @@ void _sarg_result_init(sarg_result *res, sarg_type type)
 void _sarg_result_destroy(sarg_result *res)
 {
     if (res->type == STRING && res->str_val)
+    {
         free(res->str_val);
+        res->str_val = NULL;
+    }
 }
 
 int sarg_init(sarg_root *root, sarg_argument *arguments, const int len)
@@ -213,16 +215,15 @@ int _sarg_parse_bool(const char *arg, sarg_result *res)
 
 int _sarg_parse_str(const char *arg, sarg_result *res)
 {
+    if(res->str_val)
+        free(res->str_val);
+
     res->str_val = malloc(strlen(arg) + 1);
     if(!res->str_val)
         return SARG_ERR_ALLOC;
+
     strcpy(res->str_val, arg);
 
-    return SARG_ERR_SUCCESS;
-}
-
-int _sarg_parse_list(const char *arg, sarg_result *res)
-{
     return SARG_ERR_SUCCESS;
 }
 
@@ -233,7 +234,6 @@ static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
         _sarg_parse_double,
         _sarg_parse_bool,
         _sarg_parse_str,
-        _sarg_parse_list
 };
 
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
@@ -272,7 +272,7 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
             if(ret != SARG_ERR_SUCCESS)
                 return ret;
 
-            root->results[arg_idx].is_set = 1;
+            ++root->results[arg_idx].count;
         }
     }
 
