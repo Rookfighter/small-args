@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <smallargs.h>
 #include <ctest.h>
+#include <stdio.h>
 
 #define UNUSED(e) ((void) e)
 
@@ -372,9 +373,9 @@ CTEST2(parsing, get_fail)
 CTEST2(parsing, parse_success)
 {
     sarg_result *res;
-    char *test_args1[7] = {"--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
+    char *test_argsv[8] = {"myapp", "--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
 
-    int ret = sarg_parse(&data->root, (const char**) test_args1, 7);
+    int ret = sarg_parse(&data->root, (const char**) test_argsv, 8);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     ret = sarg_get(&data->root, "prob", &res);
