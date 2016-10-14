@@ -373,9 +373,9 @@ CTEST2(parsing, get_fail)
 CTEST2(parsing, parse_success)
 {
     sarg_result *res;
-    char *test_argsv[8] = {"myapp", "--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
+    char *test_argv[8] = {"myapp", "--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
 
-    int ret = sarg_parse(&data->root, (const char**) test_argsv, 8);
+    int ret = sarg_parse(&data->root, (const char**) test_argv, 8);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     ret = sarg_get(&data->root, "prob", &res);
@@ -385,6 +385,26 @@ CTEST2(parsing, parse_success)
     ret = sarg_get(&data->root, "file", &res);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
     ASSERT_STR("myfile", res->str_val);
+
+    ret = sarg_get(&data->root, "count", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(10, res->int_val);
+
+    ret = sarg_get(&data->root, "q", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->bool_val);
+}
+
+CTEST2(parsing, parse_fail)
+{
+    char *test_argv1[7] = {"myapp", "--prob", "-f", "myfile", "--count", "10", "-q"};
+    char *test_argv2[8] = {"myapp", "--prob", "0.1", "-t", "myfile", "--count", "10", "-q"};
+
+    int ret = sarg_parse(&data->root, (const char**) test_argv1, 7);
+    ASSERT_EQUAL(SARG_ERR_PARSE, ret);
+
+    ret = sarg_parse(&data->root, (const char**) test_argv2, 8);
+    ASSERT_EQUAL(SARG_ERR_NOTFOUND, ret);
 }
 
 CTEST_TEARDOWN(parsing)
