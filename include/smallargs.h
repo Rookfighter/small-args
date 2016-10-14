@@ -53,6 +53,8 @@
 #define _SARG_IS_HEX_NUM(s) (s[0] == '0' && s[1] == 'x')
 #define _SARG_IS_OCT_NUM(s) (s[0] == '0' && strchr("1234567", s[1]) != NULL)
 
+//#define SARG_FOR_EACH(root,res) for(res = &root.results[0]; res->next != NULL; res = res->next)
+
 typedef enum _sarg_type {
 	INT = 0,
 	UINT,
