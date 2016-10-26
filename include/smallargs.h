@@ -36,6 +36,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define SARG_VERSION "0.1"
 
@@ -74,7 +75,7 @@ typedef struct _sarg_result {
     };
 } sarg_result;
 
-typedef int (*sarg_opt_cb)(const sarg_result*);
+typedef int (*sarg_opt_cb)(sarg_result*);
 
 typedef struct _sarg_opt {
 	char *short_name;
@@ -85,6 +86,7 @@ typedef struct _sarg_opt {
 } sarg_opt;
 
 typedef struct _sarg_root {
+    char *name;
 	sarg_opt *opts;
 	int opt_len;
 	sarg_result *results;
@@ -130,6 +132,10 @@ void sarg_destroy(sarg_root *root)
     }
     root->opts = NULL;
     root->opt_len = -1;
+
+    if(root->name)
+        free(root->name);
+    root->name = NULL;
 }
 
 void _sarg_result_init(sarg_result *res, sarg_opt_type type)
@@ -170,12 +176,14 @@ int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
     return SARG_ERR_SUCCESS;
 }
 
-int sarg_init(sarg_root *root, sarg_opt *options, const int len)
+int sarg_init(sarg_root *root, sarg_opt *options, const int len, const char *name)
 {
     int i, ret;
 
+    memset(root, 0, sizeof(sarg_root));
+
     // init option array
-    root->opts = malloc(sizeof(sarg_opt) * len);
+    root->opts = (sarg_opt*) malloc(sizeof(sarg_opt) * len);
     if(!root->opts)
         return SARG_ERR_ALLOC;
 
@@ -183,7 +191,7 @@ int sarg_init(sarg_root *root, sarg_opt *options, const int len)
     root->opt_len = len;
 
     // init result array
-    root->results = malloc(sizeof(sarg_result) * len);
+    root->results = (sarg_result*) malloc(sizeof(sarg_result) * len);
     if(!root->results) {
         sarg_destroy(root);
         return SARG_ERR_ALLOC;
@@ -191,6 +199,14 @@ int sarg_init(sarg_root *root, sarg_opt *options, const int len)
 
     memset(root->results, 0, sizeof(sarg_result) * len);
     root->res_len = len;
+
+    // init name
+    root->name = (char*) malloc(strlen(name) + 1);
+    if(!root->name) {
+        sarg_destroy(root);
+        return SARG_ERR_ALLOC;
+    }
+    strcpy(root->name, name);
 
     // duplicate the given options
     for (i = 0; i < root->opt_len; ++i)
@@ -379,5 +395,161 @@ int sarg_get(sarg_root *root, const char *name, sarg_result **res)
 
     return SARG_ERR_SUCCESS;
 }
+
+#ifndef SARG_NO_PRINT
+
+#include <stdarg.h>
+#include <stdio.h>
+
+int _sarg_buf_resize(char **buf, int *len)
+{
+    char *buf_tmp = *buf;
+    int old_len = *len;
+
+    *buf = (char*) malloc(old_len * 2);
+    if(!*buf)
+        return SARG_ERR_ALLOC;
+
+    memcpy(*buf, buf_tmp, old_len);
+    *len = 2 * old_len;
+
+    free(buf_tmp);
+
+    return SARG_ERR_SUCCESS;
+}
+
+int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
+{
+    va_list args;
+    int ret, write_len;
+    char *curr_ptr;
+
+    while(1)
+    {
+        write_len = *len - *off;
+        curr_ptr = &((*buf)[*off]);
+
+        va_start(args, fmt);
+
+        ret = vsnprintf(curr_ptr, write_len, fmt, args);
+
+        va_end(args);
+
+        if(ret < 0)
+            return SARG_ERR_OTHER;
+
+        if(ret < write_len) {
+            *off += ret;
+            break;
+        }
+
+        ret = _sarg_buf_resize(buf, len);
+        if(ret != SARG_ERR_SUCCESS)
+            return ret;
+    }
+
+
+    return SARG_ERR_SUCCESS;
+}
+
+int sarg_help_text(sarg_root *root, char **outbuf)
+{
+    int len, linelen,  i, off, lineoff, ret;
+    char *linebuf;
+
+    len = 256;
+    *outbuf = (char*) malloc(len);
+    if(!*outbuf)
+        return SARG_ERR_ALLOC;
+
+    linelen = 128;
+    linebuf = (char*) malloc(linelen);
+    if(!linebuf) {
+        free(*outbuf);
+        return SARG_ERR_ALLOC;
+    }
+
+    off = 0;
+    ret = _sarg_snprintf(outbuf, &len, &off, "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
+    if(ret != SARG_ERR_SUCCESS)
+        goto err;
+
+
+    for(i = 0; i < root->opt_len; ++i)
+    {
+        if(root->opts[i].short_name && root->opts[i].long_name)
+        {
+            lineoff = 0;
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s", root->opts[i].short_name, root->opts[i].long_name);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+
+            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+        }
+        else if(root->opts[i].short_name)
+        {
+            lineoff = 0;
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s", root->opts[i].short_name);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+
+            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+        } else if(root->opts[i].long_name)
+        {
+            lineoff = 0;
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s", root->opts[i].long_name);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+
+            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+        }
+
+        if(root->opts[i].help)
+        {
+            ret = _sarg_snprintf(outbuf, &len, &off, "%s", root->opts[i].help);
+            if(ret != SARG_ERR_SUCCESS)
+                goto err;
+        }
+
+        ret = _sarg_snprintf(outbuf, &len, &off, "\n");
+        if(ret != SARG_ERR_SUCCESS)
+            goto err;
+    }
+
+    free(linebuf);
+    return SARG_ERR_SUCCESS;
+
+err:
+    free(linebuf);
+    free(*outbuf);
+    return ret;
+}
+
+int sarg_help_print(sarg_root *root)
+{
+    char *buf;
+    int ret;
+
+    ret = sarg_help_text(root, &buf);
+    if(ret != SARG_ERR_SUCCESS)
+        return ret;
+    printf("%s", buf);
+
+    return SARG_ERR_SUCCESS;
+}
+
+int sarg_help_cb(sarg_root *root, sarg_result *res)
+{
+    _SARG_UNUSED(res);
+    return sarg_help_print(root);
+}
+
+#endif
 
 #endif

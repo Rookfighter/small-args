@@ -24,7 +24,7 @@ int main(int argc, const char **argv)
     sarg_result *res;
     int i;
 
-    int ret = sarg_init(&root, my_args, 5);
+    int ret = sarg_init(&root, my_args, 5, "sarg_sample_c");
     assert(ret == SARG_ERR_SUCCESS);
 
     ret = sarg_parse(&root, argv, argc);
@@ -44,7 +44,7 @@ int main(int argc, const char **argv)
 
     if(res->bool_val)
     {
-        //sarg_print_help(&root);
+       sarg_help_print(&root);
        return -1;
     }
 

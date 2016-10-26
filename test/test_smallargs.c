@@ -26,7 +26,7 @@ CTEST(misc, root_init)
     root.results = NULL;
     root.res_len = -1;
 
-    int ret = sarg_init(&root, args, 3);
+    int ret = sarg_init(&root, args, 3, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     ASSERT_NOT_NULL(root.opts);
@@ -61,7 +61,7 @@ CTEST(misc, root_destroy)
     };
     sarg_root root;
 
-    int ret = sarg_init(&root, args, 3);
+    int ret = sarg_init(&root, args, 3, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     sarg_destroy(&root);
@@ -136,7 +136,7 @@ CTEST_DATA(parsing) {
 
 CTEST_SETUP(parsing)
 {
-    ASSERT_EQUAL(SARG_ERR_SUCCESS, sarg_init(&data->root, test_args, 5));
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, sarg_init(&data->root, test_args, 5, "test"));
     _sarg_result_init(&data->result, INT);
 }
 
