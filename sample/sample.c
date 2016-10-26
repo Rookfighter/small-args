@@ -10,12 +10,12 @@
 #include <math.h>
 #include <assert.h>
 
-static sarg_argument my_args[5] = {
-        {"h", "help", "show help text", BOOL},
-        {"v", "verbose", "increase verbosity", BOOL},
-        {"c", "count", "count up to this number", INT},
-        {NULL, "root", "calculate square root of this number", DOUBLE},
-        {NULL, "say", "print the given text", STRING}
+static sarg_opt my_args[5] = {
+        {"h", "help", "show help text", BOOL, NULL},
+        {"v", "verbose", "increase verbosity", BOOL, NULL},
+        {"c", "count", "count up to this number", INT, NULL},
+        {NULL, "root", "calculate square root of this number", DOUBLE, NULL},
+        {NULL, "say", "print the given text", STRING, NULL}
 };
 
 int main(int argc, const char **argv)

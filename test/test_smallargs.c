@@ -14,50 +14,50 @@
 
 CTEST(misc, root_init)
 {
-    sarg_argument args[] = {
-            {"n", "count", "some count variable", INT},
-            {"f", "file", "out file", STRING},
-            {"q", "quiet", "enable quiet mode", BOOL},
+    sarg_opt args[] = {
+            {"n", "count", "some count variable", INT, NULL},
+            {"f", "file", "out file", STRING, NULL},
+            {"q", "quiet", "enable quiet mode", BOOL, NULL},
     };
     sarg_root root;
 
-    root.args = NULL;
-    root.arg_len = -1;
+    root.opts = NULL;
+    root.opt_len = -1;
     root.results = NULL;
     root.res_len = -1;
 
     int ret = sarg_init(&root, args, 3);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
-    ASSERT_NOT_NULL(root.args);
-    ASSERT_EQUAL(3, root.arg_len);
+    ASSERT_NOT_NULL(root.opts);
+    ASSERT_EQUAL(3, root.opt_len);
     ASSERT_NOT_NULL(root.results);
     ASSERT_EQUAL(3, root.res_len);
 
-    ASSERT_STR("n", root.args[0].short_name);
-    ASSERT_STR("count", root.args[0].long_name);
-    ASSERT_STR("some count variable", root.args[0].help);
-    ASSERT_EQUAL(INT, root.args[0].type);
+    ASSERT_STR("n", root.opts[0].short_name);
+    ASSERT_STR("count", root.opts[0].long_name);
+    ASSERT_STR("some count variable", root.opts[0].help);
+    ASSERT_EQUAL(INT, root.opts[0].type);
 
-    ASSERT_STR("f", root.args[1].short_name);
-    ASSERT_STR("file", root.args[1].long_name);
-    ASSERT_STR("out file", root.args[1].help);
-    ASSERT_EQUAL(STRING, root.args[1].type);
+    ASSERT_STR("f", root.opts[1].short_name);
+    ASSERT_STR("file", root.opts[1].long_name);
+    ASSERT_STR("out file", root.opts[1].help);
+    ASSERT_EQUAL(STRING, root.opts[1].type);
 
-    ASSERT_STR("q", root.args[2].short_name);
-    ASSERT_STR("quiet", root.args[2].long_name);
-    ASSERT_STR("enable quiet mode", root.args[2].help);
-    ASSERT_EQUAL(BOOL, root.args[2].type);
+    ASSERT_STR("q", root.opts[2].short_name);
+    ASSERT_STR("quiet", root.opts[2].long_name);
+    ASSERT_STR("enable quiet mode", root.opts[2].help);
+    ASSERT_EQUAL(BOOL, root.opts[2].type);
 
     sarg_destroy(&root);
 }
 
 CTEST(misc, root_destroy)
 {
-    sarg_argument args[] = {
-            {"n", "count", "some count variable", INT},
-            {"f", "file", "out file", STRING},
-            {"q", "quiet", "enable quiet mode", BOOL},
+    sarg_opt args[] = {
+            {"n", "count", "some count variable", INT, NULL},
+            {"f", "file", "out file", STRING, NULL},
+            {"q", "quiet", "enable quiet mode", BOOL, NULL},
     };
     sarg_root root;
 
@@ -66,9 +66,9 @@ CTEST(misc, root_destroy)
 
     sarg_destroy(&root);
 
-    ASSERT_NULL(root.args);
+    ASSERT_NULL(root.opts);
     ASSERT_NULL(root.results);
-    ASSERT_EQUAL(-1, root.arg_len);
+    ASSERT_EQUAL(-1, root.opt_len);
     ASSERT_EQUAL(-1, root.res_len);
 }
 
@@ -121,12 +121,12 @@ CTEST(misc, get_invalid_number_base)
  * Parsing Tests
  * ========================================================== */
 
-sarg_argument test_args[5] = {
-    {"i", NULL, "foo bar", INT},
-    {"n", "count", "some count variable", UINT},
-    {NULL, "prob", "probability", DOUBLE},
-    {"f", "file", "out file", STRING},
-    {"q", "quiet", "enable quiet mode", BOOL}
+sarg_opt test_args[5] = {
+    {"i", NULL, "foo bar", INT, NULL},
+    {"n", "count", "some count variable", UINT, NULL},
+    {NULL, "prob", "probability", DOUBLE, NULL},
+    {"f", "file", "out file", STRING, NULL},
+    {"q", "quiet", "enable quiet mode", BOOL, NULL}
 };
 
 CTEST_DATA(parsing) {
@@ -318,25 +318,25 @@ CTEST2(parsing, parse_string_success)
 
 CTEST2(parsing, find_arg_success)
 {
-    int ret = _sarg_find_arg(&data->root, "prob");
+    int ret = _sarg_find_opt(&data->root, "prob");
     ASSERT_EQUAL(2, ret);
 
-    ret = _sarg_find_arg(&data->root, "i");
+    ret = _sarg_find_opt(&data->root, "i");
     ASSERT_EQUAL(0, ret);
 
-    ret = _sarg_find_arg(&data->root, "file");
+    ret = _sarg_find_opt(&data->root, "file");
     ASSERT_EQUAL(3, ret);
 
-    ret = _sarg_find_arg(&data->root, "f");
+    ret = _sarg_find_opt(&data->root, "f");
     ASSERT_EQUAL(3, ret);
 }
 
 CTEST2(parsing, find_arg_fail)
 {
-    int ret = _sarg_find_arg(&data->root, "foo");
+    int ret = _sarg_find_opt(&data->root, "foo");
     ASSERT_EQUAL(-1, ret);
 
-    ret = _sarg_find_arg(&data->root, "a");
+    ret = _sarg_find_opt(&data->root, "a");
     ASSERT_EQUAL(-1, ret);
 }
 
@@ -410,5 +410,5 @@ CTEST2(parsing, parse_fail)
 CTEST_TEARDOWN(parsing)
 {
     _sarg_result_destroy(&data->result);
-    ASSERT_EQUAL(SARG_ERR_SUCCESS, sarg_destroy(&data->root));
+    sarg_destroy(&data->root);
 }
