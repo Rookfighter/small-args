@@ -36,7 +36,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #define SARG_VERSION "0.1"
 
