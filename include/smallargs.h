@@ -53,8 +53,6 @@
 #define _SARG_IS_HEX_NUM(s) (s[0] == '0' && s[1] == 'x')
 #define _SARG_IS_OCT_NUM(s) (s[0] == '0' && strchr("1234567", s[1]) != NULL)
 
-//#define SARG_FOR_EACH(root,res) for(res = &root.results[0]; res->next != NULL; res = res->next)
-
 typedef enum _sarg_opt_type {
 	INT = 0,
 	UINT,
@@ -63,16 +61,6 @@ typedef enum _sarg_opt_type {
 	STRING,
 	COUNT
 } sarg_opt_type;
-
-typedef int (*sarg_opt_cb)(const char*);
-
-typedef struct _sarg_opt {
-	char *short_name;
-	char *long_name;
-	char *help;
-	sarg_opt_type type;
-	sarg_opt_cb callback;
-} sarg_opt;
 
 typedef struct _sarg_result {
     sarg_opt_type type;
@@ -86,13 +74,22 @@ typedef struct _sarg_result {
     };
 } sarg_result;
 
+typedef int (*sarg_opt_cb)(const sarg_result*);
+
+typedef struct _sarg_opt {
+	char *short_name;
+	char *long_name;
+	char *help;
+	sarg_opt_type type;
+	sarg_opt_cb callback;
+} sarg_opt;
+
 typedef struct _sarg_root {
 	sarg_opt *opts;
 	int opt_len;
 	sarg_result *results;
 	int res_len;
 } sarg_root;
-
 
 void _sarg_result_destroy(sarg_result *res)
 {
@@ -173,14 +170,13 @@ int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
     return SARG_ERR_SUCCESS;
 }
 
-
 int sarg_init(sarg_root *root, sarg_opt *options, const int len)
 {
     int i, ret;
 
     // init option array
     root->opts = malloc(sizeof(sarg_opt) * len);
-    if(root->opts == NULL)
+    if(!root->opts)
         return SARG_ERR_ALLOC;
 
     memset(root->opts, 0, sizeof(sarg_opt) * len);
@@ -188,7 +184,7 @@ int sarg_init(sarg_root *root, sarg_opt *options, const int len)
 
     // init result array
     root->results = malloc(sizeof(sarg_result) * len);
-    if(root->results == NULL) {
+    if(!root->results) {
         sarg_destroy(root);
         return SARG_ERR_ALLOC;
     }
@@ -357,6 +353,14 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
                 return ret;
 
             ++root->results[arg_idx].count;
+
+            // call callback if it was set
+            if(root->opts[arg_idx].callback)
+            {
+                ret = root->opts[arg_idx].callback(&root->results[arg_idx]);
+                if(ret != SARG_ERR_SUCCESS)
+                    return ret;
+            }
         }
     }
 
