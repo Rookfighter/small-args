@@ -175,11 +175,22 @@ int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
     return SARG_ERR_SUCCESS;
 }
 
-int sarg_init(sarg_root *root, sarg_opt *options, const int len, const char *name)
+int _sarg_opt_len(sarg_opt *options)
 {
-    int i, ret;
+    int i;
+
+    for(i = 0; options[i].short_name || options[i].long_name; ++i);
+
+    return i;
+}
+
+int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
+{
+    int i, ret, len;
 
     memset(root, 0, sizeof(sarg_root));
+
+    len = _sarg_opt_len(options);
 
     // init option array
     root->opts = (sarg_opt*) malloc(sizeof(sarg_opt) * len);

@@ -18,6 +18,7 @@ CTEST(misc, root_init)
             {"n", "count", "some count variable", INT, NULL},
             {"f", "file", "out file", STRING, NULL},
             {"q", "quiet", "enable quiet mode", BOOL, NULL},
+            {NULL, NULL, NULL, INT, NULL}
     };
     sarg_root root;
 
@@ -26,7 +27,7 @@ CTEST(misc, root_init)
     root.results = NULL;
     root.res_len = -1;
 
-    int ret = sarg_init(&root, args, 3, "test");
+    int ret = sarg_init(&root, args, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     ASSERT_NOT_NULL(root.opts);
@@ -58,10 +59,11 @@ CTEST(misc, root_destroy)
             {"n", "count", "some count variable", INT, NULL},
             {"f", "file", "out file", STRING, NULL},
             {"q", "quiet", "enable quiet mode", BOOL, NULL},
+            {NULL, NULL, NULL, INT, NULL}
     };
     sarg_root root;
 
-    int ret = sarg_init(&root, args, 3, "test");
+    int ret = sarg_init(&root, args, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     sarg_destroy(&root);
@@ -121,12 +123,13 @@ CTEST(misc, get_invalid_number_base)
  * Parsing Tests
  * ========================================================== */
 
-sarg_opt test_args[5] = {
+sarg_opt test_args[] = {
     {"i", NULL, "foo bar", INT, NULL},
     {"n", "count", "some count variable", UINT, NULL},
     {NULL, "prob", "probability", DOUBLE, NULL},
     {"f", "file", "out file", STRING, NULL},
-    {"q", "quiet", "enable quiet mode", BOOL, NULL}
+    {"q", "quiet", "enable quiet mode", BOOL, NULL},
+    {NULL, NULL, NULL, INT, NULL}
 };
 
 CTEST_DATA(parsing) {
@@ -136,7 +139,7 @@ CTEST_DATA(parsing) {
 
 CTEST_SETUP(parsing)
 {
-    ASSERT_EQUAL(SARG_ERR_SUCCESS, sarg_init(&data->root, test_args, 5, "test"));
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, sarg_init(&data->root, test_args, "test"));
     _sarg_result_init(&data->result, INT);
 }
 
