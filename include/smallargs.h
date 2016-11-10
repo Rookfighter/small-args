@@ -54,12 +54,12 @@
 #define _SARG_IS_OCT_NUM(s) (s[0] == '0' && strchr("1234567", s[1]) != NULL)
 
 typedef enum _sarg_opt_type {
-	INT = 0,
-	UINT,
-	DOUBLE,
-	BOOL,
-	STRING,
-	COUNT
+    INT = 0,
+    UINT,
+    DOUBLE,
+    BOOL,
+    STRING,
+    COUNT
 } sarg_opt_type;
 
 typedef struct _sarg_result {
@@ -74,28 +74,27 @@ typedef struct _sarg_result {
     };
 } sarg_result;
 
-typedef int (*sarg_opt_cb)(sarg_result*);
+typedef int (*sarg_opt_cb)(sarg_result *);
 
 typedef struct _sarg_opt {
-	char *short_name;
-	char *long_name;
-	char *help;
-	sarg_opt_type type;
-	sarg_opt_cb callback;
+    char *short_name;
+    char *long_name;
+    char *help;
+    sarg_opt_type type;
+    sarg_opt_cb callback;
 } sarg_opt;
 
 typedef struct _sarg_root {
     char *name;
-	sarg_opt *opts;
-	int opt_len;
-	sarg_result *results;
-	int res_len;
+    sarg_opt *opts;
+    int opt_len;
+    sarg_result *results;
+    int res_len;
 } sarg_root;
 
 void _sarg_result_destroy(sarg_result *res)
 {
-    if (res->type == STRING && res->str_val)
-    {
+    if(res->type == STRING && res->str_val) {
         free(res->str_val);
         res->str_val = NULL;
     }
@@ -123,8 +122,7 @@ void sarg_destroy(sarg_root *root)
     root->results = NULL;
     root->res_len = -1;
 
-    if(root->opts)
-    {
+    if(root->opts) {
         for(i = 0; i < root->opt_len; ++i)
             _sarg_opt_destroy(&root->opts[i]);
         free(root->opts);
@@ -145,25 +143,22 @@ void _sarg_result_init(sarg_result *res, sarg_opt_type type)
 
 int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
 {
-    if(src->short_name)
-    {
-        dest->short_name = (char*) malloc(strlen(src->short_name) + 1);
+    if(src->short_name) {
+        dest->short_name = (char *) malloc(strlen(src->short_name) + 1);
         if(!dest->short_name)
             return SARG_ERR_ALLOC;
         strcpy(dest->short_name, src->short_name);
     }
 
-    if(src->long_name)
-    {
-        dest->long_name = (char*) malloc(strlen(src->long_name) + 1);
+    if(src->long_name) {
+        dest->long_name = (char *) malloc(strlen(src->long_name) + 1);
         if(!dest->long_name)
             return SARG_ERR_ALLOC;
         strcpy(dest->long_name, src->long_name);
     }
 
-    if(src->help)
-    {
-        dest->help = (char*) malloc(strlen(src->help) + 1);
+    if(src->help) {
+        dest->help = (char *) malloc(strlen(src->help) + 1);
         if(!dest->help)
             return SARG_ERR_ALLOC;
         strcpy(dest->help, src->help);
@@ -193,7 +188,7 @@ int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
     len = _sarg_opt_len(options);
 
     // init option array
-    root->opts = (sarg_opt*) malloc(sizeof(sarg_opt) * len);
+    root->opts = (sarg_opt *) malloc(sizeof(sarg_opt) * len);
     if(!root->opts)
         return SARG_ERR_ALLOC;
 
@@ -201,7 +196,7 @@ int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
     root->opt_len = len;
 
     // init result array
-    root->results = (sarg_result*) malloc(sizeof(sarg_result) * len);
+    root->results = (sarg_result *) malloc(sizeof(sarg_result) * len);
     if(!root->results) {
         sarg_destroy(root);
         return SARG_ERR_ALLOC;
@@ -211,7 +206,7 @@ int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
     root->res_len = len;
 
     // init name
-    root->name = (char*) malloc(strlen(name) + 1);
+    root->name = (char *) malloc(strlen(name) + 1);
     if(!root->name) {
         sarg_destroy(root);
         return SARG_ERR_ALLOC;
@@ -219,18 +214,16 @@ int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
     strcpy(root->name, name);
 
     // duplicate the given options
-    for (i = 0; i < root->opt_len; ++i)
-    {
+    for(i = 0; i < root->opt_len; ++i) {
         ret = _sarg_opt_duplicate(&root->opts[i], &options[i]);
-        if(ret != SARG_ERR_SUCCESS)
-        {
+        if(ret != SARG_ERR_SUCCESS) {
             sarg_destroy(root);
             return ret;
         }
     }
 
     // init results
-    for (i = 0; i < root->res_len; ++i)
+    for(i = 0; i < root->res_len; ++i)
         _sarg_result_init(&root->results[i], root->opts[i].type);
 
     return SARG_ERR_SUCCESS;
@@ -239,16 +232,17 @@ int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
 int _sarg_find_opt(sarg_root *root, const char *name)
 {
     int i, is_short, is_long;
-    char *namep = (char*) name;
+    char *namep = (char *) name;
 
     while(namep[0] == '-')
         ++namep;
 
-    for(i = 0; i < root->opt_len; ++i)
-    {
-        is_short = root->opts[i].short_name && strcmp(namep, root->opts[i].short_name) == 0;
-        is_long = root->opts[i].long_name && strcmp(namep, root->opts[i].long_name) == 0;
-        if (is_short || is_long)
+    for(i = 0; i < root->opt_len; ++i) {
+        is_short = root->opts[i].short_name
+                   && strcmp(namep, root->opts[i].short_name) == 0;
+        is_long = root->opts[i].long_name
+                  && strcmp(namep, root->opts[i].long_name) == 0;
+        if(is_short || is_long)
             return i;
     }
 
@@ -261,11 +255,10 @@ int _sarg_get_number_base(const char *arg)
     int base = 10;
 
     // define base for number conversion
-    if(len > 2)
-    {
-        if (_SARG_IS_OCT_NUM(arg))
+    if(len > 2) {
+        if(_SARG_IS_OCT_NUM(arg))
             base = 8;
-        if (_SARG_IS_HEX_NUM(arg))
+        if(_SARG_IS_HEX_NUM(arg))
             base = 16;
     }
 
@@ -333,13 +326,13 @@ int _sarg_parse_str(const char *arg, sarg_result *res)
     return SARG_ERR_SUCCESS;
 }
 
-typedef int (*_sarg_parse_func)(const char*, sarg_result*);
+typedef int (*_sarg_parse_func)(const char *, sarg_result *);
 static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
-        _sarg_parse_int,
-        _sarg_parse_uint,
-        _sarg_parse_double,
-        _sarg_parse_bool,
-        _sarg_parse_str,
+    _sarg_parse_int,
+    _sarg_parse_uint,
+    _sarg_parse_double,
+    _sarg_parse_bool,
+    _sarg_parse_str,
 };
 
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
@@ -347,42 +340,38 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
     int i, arg_idx, len, ret;
 
     // reset results
-    for (i = 0; i < root->res_len; ++i) {
+    for(i = 0; i < root->res_len; ++i) {
         _sarg_result_destroy(&root->results[i]);
         _sarg_result_init(&root->results[i], root->opts[i].type);
     }
 
-    for(i = 1; i < argc; ++i)
-    {
+    for(i = 1; i < argc; ++i) {
         // argument has to have at least 2 chars
         len = strlen(argv[i]);
         if(len < 2)
             return SARG_ERR_PARSE;
 
-        if(_SARG_IS_SHORT_ARG(argv[i]) || _SARG_IS_LONG_ARG(argv[i]))
-        {
+        if(_SARG_IS_SHORT_ARG(argv[i]) || _SARG_IS_LONG_ARG(argv[i])) {
             // find option
             arg_idx = _sarg_find_opt(root, argv[i]);
             if(arg_idx < 0)
                 return SARG_ERR_NOTFOUND;
 
-            if(root->opts[arg_idx].type != BOOL)
-            {
+            if(root->opts[arg_idx].type != BOOL) {
                 ++i;
                 if(i >= argc)
                     return SARG_ERR_PARSE;
             }
 
             ret = _sarg_parse_funcs[root->opts[arg_idx].type](
-                    argv[i], &root->results[arg_idx]);
+                      argv[i], &root->results[arg_idx]);
             if(ret != SARG_ERR_SUCCESS)
                 return ret;
 
             ++root->results[arg_idx].count;
 
             // call callback if it was set
-            if(root->opts[arg_idx].callback)
-            {
+            if(root->opts[arg_idx].callback) {
                 ret = root->opts[arg_idx].callback(&root->results[arg_idx]);
                 if(ret != SARG_ERR_SUCCESS)
                     return ret;
@@ -416,7 +405,7 @@ int _sarg_buf_resize(char **buf, int *len)
     char *buf_tmp = *buf;
     int old_len = *len;
 
-    *buf = (char*) malloc(old_len * 2);
+    *buf = (char *) malloc(old_len * 2);
     if(!*buf) {
         *buf = buf_tmp;
         return SARG_ERR_ALLOC;
@@ -436,8 +425,7 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
     int ret, write_len;
     char *curr_ptr;
 
-    while(1)
-    {
+    while(1) {
         write_len = *len - *off;
         curr_ptr = &((*buf)[*off]);
 
@@ -471,41 +459,40 @@ int sarg_help_text(sarg_root *root, char **outbuf)
 
     // alloc output buffer and tmp buffer
     outlen = 256;
-    *outbuf = (char*) malloc(outlen);
+    *outbuf = (char *) malloc(outlen);
     if(!*outbuf)
         return SARG_ERR_ALLOC;
 
     linelen = 128;
-    linebuf = (char*) malloc(linelen);
+    linebuf = (char *) malloc(linelen);
     if(!linebuf) {
         free(*outbuf);
         return SARG_ERR_ALLOC;
     }
 
     offset = 0;
-    ret = _sarg_snprintf(outbuf, &outlen, &offset, "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
+    ret = _sarg_snprintf(outbuf, &outlen, &offset,
+                         "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
     if(ret != SARG_ERR_SUCCESS)
         goto _sarg_help_text_err;
 
-    for(i = 0; i < root->opt_len; ++i)
-    {
+    for(i = 0; i < root->opt_len; ++i) {
         lineoff = 0;
         linebuf[0] = '\0';
         // create output depending on which options are available
-        if(root->opts[i].short_name && root->opts[i].long_name)
-        {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s", root->opts[i].short_name, root->opts[i].long_name);
+        if(root->opts[i].short_name && root->opts[i].long_name) {
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s",
+                                 root->opts[i].short_name, root->opts[i].long_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
-        }
-        else if(root->opts[i].short_name)
-        {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s", root->opts[i].short_name);
+        } else if(root->opts[i].short_name) {
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s",
+                                 root->opts[i].short_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
-        } else if(root->opts[i].long_name)
-        {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s", root->opts[i].long_name);
+        } else if(root->opts[i].long_name) {
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s",
+                                 root->opts[i].long_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
         }
@@ -515,8 +502,7 @@ int sarg_help_text(sarg_root *root, char **outbuf)
         if(ret != SARG_ERR_SUCCESS)
             goto _sarg_help_text_err;
 
-        if(root->opts[i].help)
-        {
+        if(root->opts[i].help) {
             ret = _sarg_snprintf(outbuf, &outlen, &offset, "%s", root->opts[i].help);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;

@@ -15,10 +15,10 @@
 CTEST(misc, root_init)
 {
     sarg_opt args[] = {
-            {"n", "count", "some count variable", INT, NULL},
-            {"f", "file", "out file", STRING, NULL},
-            {"q", "quiet", "enable quiet mode", BOOL, NULL},
-            {NULL, NULL, NULL, INT, NULL}
+        {"n", "count", "some count variable", INT, NULL},
+        {"f", "file", "out file", STRING, NULL},
+        {"q", "quiet", "enable quiet mode", BOOL, NULL},
+        {NULL, NULL, NULL, INT, NULL}
     };
     sarg_root root;
 
@@ -56,10 +56,10 @@ CTEST(misc, root_init)
 CTEST(misc, root_destroy)
 {
     sarg_opt args[] = {
-            {"n", "count", "some count variable", INT, NULL},
-            {"f", "file", "out file", STRING, NULL},
-            {"q", "quiet", "enable quiet mode", BOOL, NULL},
-            {NULL, NULL, NULL, INT, NULL}
+        {"n", "count", "some count variable", INT, NULL},
+        {"f", "file", "out file", STRING, NULL},
+        {"q", "quiet", "enable quiet mode", BOOL, NULL},
+        {NULL, NULL, NULL, INT, NULL}
     };
     sarg_root root;
 
@@ -92,7 +92,7 @@ CTEST(misc, result_destroy)
     sarg_result res;
 
     _sarg_result_init(&res, STRING);
-    res.str_val = (char*) malloc(8);
+    res.str_val = (char *) malloc(8);
     ASSERT_NOT_NULL(res.str_val);
 
     _sarg_result_destroy(&res);
@@ -132,7 +132,8 @@ sarg_opt test_args[] = {
     {NULL, NULL, NULL, INT, NULL}
 };
 
-CTEST_DATA(parsing) {
+CTEST_DATA(parsing)
+{
     sarg_root root;
     sarg_result result;
 };
@@ -355,9 +356,9 @@ CTEST2(parsing, get_success)
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
     ASSERT_EQUAL(DOUBLE, res->type);
 
-   ret = sarg_get(&data->root, "i", &res);
-   ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
-   ASSERT_EQUAL(INT, res->type);
+    ret = sarg_get(&data->root, "i", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(INT, res->type);
 
 }
 
@@ -378,7 +379,7 @@ CTEST2(parsing, parse_success)
     sarg_result *res;
     char *test_argv[8] = {"myapp", "--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
 
-    int ret = sarg_parse(&data->root, (const char**) test_argv, 8);
+    int ret = sarg_parse(&data->root, (const char **) test_argv, 8);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
 
     ret = sarg_get(&data->root, "prob", &res);
@@ -403,10 +404,10 @@ CTEST2(parsing, parse_fail)
     char *test_argv1[7] = {"myapp", "--prob", "-f", "myfile", "--count", "10", "-q"};
     char *test_argv2[8] = {"myapp", "--prob", "0.1", "-t", "myfile", "--count", "10", "-q"};
 
-    int ret = sarg_parse(&data->root, (const char**) test_argv1, 7);
+    int ret = sarg_parse(&data->root, (const char **) test_argv1, 7);
     ASSERT_EQUAL(SARG_ERR_PARSE, ret);
 
-    ret = sarg_parse(&data->root, (const char**) test_argv2, 8);
+    ret = sarg_parse(&data->root, (const char **) test_argv2, 8);
     ASSERT_EQUAL(SARG_ERR_NOTFOUND, ret);
 }
 

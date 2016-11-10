@@ -11,12 +11,12 @@
 #include <assert.h>
 
 static sarg_opt my_args[] = {
-        {"h", "help", "show help text", BOOL, NULL},
-        {"v", "verbose", "increase verbosity", BOOL, NULL},
-        {"c", "count", "count up to this number", INT, NULL},
-        {NULL, "root", "calculate square root of this number", DOUBLE, NULL},
-        {NULL, "say", "print the given text", STRING, NULL},
-        {NULL, NULL, NULL, INT, NULL}
+    {"h", "help", "show help text", BOOL, NULL},
+    {"v", "verbose", "increase verbosity", BOOL, NULL},
+    {"c", "count", "count up to this number", INT, NULL},
+    {NULL, "root", "calculate square root of this number", DOUBLE, NULL},
+    {NULL, "say", "print the given text", STRING, NULL},
+    {NULL, NULL, NULL, INT, NULL}
 };
 
 int main(int argc, const char **argv)
@@ -29,8 +29,7 @@ int main(int argc, const char **argv)
     assert(ret == SARG_ERR_SUCCESS);
 
     ret = sarg_parse(&root, argv, argc);
-    if(ret != SARG_ERR_SUCCESS)
-    {
+    if(ret != SARG_ERR_SUCCESS) {
         printf("Parsing failed\n");
         //sarg_print_help(&root);
         return -1;
@@ -43,10 +42,9 @@ int main(int argc, const char **argv)
     // if the option was initialized in sarg_init
     assert(ret == SARG_ERR_SUCCESS);
 
-    if(res->bool_val)
-    {
-       sarg_help_print(&root);
-       return -1;
+    if(res->bool_val) {
+        sarg_help_print(&root);
+        return -1;
     }
 
     // check for verbosity
@@ -58,13 +56,11 @@ int main(int argc, const char **argv)
     // count to the given number
     ret = sarg_get(&root, "count", &res);
     assert(ret == SARG_ERR_SUCCESS);
-    if(res->count > 0)
-    {
+    if(res->count > 0) {
         printf("counting: ");
-        for(i = 0; i < res->int_val; ++i)
-        {
-            printf("%d", i+1);
-            if(i+1 != res->int_val)
+        for(i = 0; i < res->int_val; ++i) {
+            printf("%d", i + 1);
+            if(i + 1 != res->int_val)
                 printf(",");
         }
         printf("\n");
@@ -73,16 +69,14 @@ int main(int argc, const char **argv)
     // calculate square root of given number
     ret = sarg_get(&root, "root", &res);
     assert(ret == SARG_ERR_SUCCESS);
-    if(res->count > 0)
-    {
+    if(res->count > 0) {
         printf("%f\n", sqrt(res->double_val));
     }
 
     // calculate square root of given number
     ret = sarg_get(&root, "say", &res);
     assert(ret == SARG_ERR_SUCCESS);
-    if(res->count > 0)
-    {
+    if(res->count > 0) {
         printf("you say: %s\n", res->str_val);
     }
 

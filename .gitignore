@@ -1,6 +1,7 @@
 *.cproject
 *.project
 *.settings
+*.orig
 
 dep/
 build/
