@@ -417,8 +417,10 @@ int _sarg_buf_resize(char **buf, int *len)
     int old_len = *len;
 
     *buf = (char*) malloc(old_len * 2);
-    if(!*buf)
+    if(!*buf) {
+        *buf = buf_tmp;
         return SARG_ERR_ALLOC;
+    }
 
     memcpy(*buf, buf_tmp, old_len);
     *len = 2 * old_len;
@@ -464,11 +466,12 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
 
 int sarg_help_text(sarg_root *root, char **outbuf)
 {
-    int len, linelen,  i, off, lineoff, ret;
+    int outlen, linelen,  i, offset, lineoff, ret;
     char *linebuf;
 
-    len = 256;
-    *outbuf = (char*) malloc(len);
+    // alloc output buffer and tmp buffer
+    outlen = 256;
+    *outbuf = (char*) malloc(outlen);
     if(!*outbuf)
         return SARG_ERR_ALLOC;
 
@@ -479,65 +482,58 @@ int sarg_help_text(sarg_root *root, char **outbuf)
         return SARG_ERR_ALLOC;
     }
 
-    off = 0;
-    ret = _sarg_snprintf(outbuf, &len, &off, "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
+    offset = 0;
+    ret = _sarg_snprintf(outbuf, &outlen, &offset, "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
     if(ret != SARG_ERR_SUCCESS)
-        goto err;
-
+        goto _sarg_help_text_err;
 
     for(i = 0; i < root->opt_len; ++i)
     {
+        lineoff = 0;
+        linebuf[0] = '\0';
+        // create output depending on which options are available
         if(root->opts[i].short_name && root->opts[i].long_name)
         {
-            lineoff = 0;
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s", root->opts[i].short_name, root->opts[i].long_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto err;
-
-            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
-            if(ret != SARG_ERR_SUCCESS)
-                goto err;
+                goto _sarg_help_text_err;
         }
         else if(root->opts[i].short_name)
         {
-            lineoff = 0;
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s", root->opts[i].short_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto err;
-
-            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
-            if(ret != SARG_ERR_SUCCESS)
-                goto err;
+                goto _sarg_help_text_err;
         } else if(root->opts[i].long_name)
         {
-            lineoff = 0;
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s", root->opts[i].long_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto err;
-
-            ret = _sarg_snprintf(outbuf, &len, &off, "%-30s", linebuf);
-            if(ret != SARG_ERR_SUCCESS)
-                goto err;
+                goto _sarg_help_text_err;
         }
+
+        // print options string into outbuf
+        ret = _sarg_snprintf(outbuf, &outlen, &offset, "%-30s", linebuf);
+        if(ret != SARG_ERR_SUCCESS)
+            goto _sarg_help_text_err;
 
         if(root->opts[i].help)
         {
-            ret = _sarg_snprintf(outbuf, &len, &off, "%s", root->opts[i].help);
+            ret = _sarg_snprintf(outbuf, &outlen, &offset, "%s", root->opts[i].help);
             if(ret != SARG_ERR_SUCCESS)
-                goto err;
+                goto _sarg_help_text_err;
         }
 
-        ret = _sarg_snprintf(outbuf, &len, &off, "\n");
+        ret = _sarg_snprintf(outbuf, &outlen, &offset, "\n");
         if(ret != SARG_ERR_SUCCESS)
-            goto err;
+            goto _sarg_help_text_err;
     }
 
     free(linebuf);
     return SARG_ERR_SUCCESS;
 
-err:
+_sarg_help_text_err:
     free(linebuf);
     free(*outbuf);
+    *outbuf = NULL;
     return ret;
 }
 
@@ -550,6 +546,7 @@ int sarg_help_print(sarg_root *root)
     if(ret != SARG_ERR_SUCCESS)
         return ret;
     printf("%s", buf);
+    free(buf);
 
     return SARG_ERR_SUCCESS;
 }
