@@ -110,6 +110,11 @@ void _sarg_opt_destroy(sarg_opt *opt)
         free(opt->help);
 }
 
+/**
+ * @brief Destroys the given root and frees its memory.
+ *
+ * @param root root object that will be cleared
+ */
 void sarg_destroy(sarg_root *root)
 {
     int i;
@@ -179,6 +184,15 @@ int _sarg_opt_len(sarg_opt *options)
     return i;
 }
 
+/**
+ * @brief Initializes the root data structure with the given options.
+ *
+ * @param root root data structure which will be used to parse arguments
+ * @param options NULL-terminated array of allowed options
+ * @param name name of the application
+ *
+ * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
+ */
 int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
 {
     int i, ret, len;
@@ -335,6 +349,21 @@ static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
     _sarg_parse_str,
 };
 
+/**
+ * @brief Parses the given arguments with the given root object.
+ *
+ * The root object has to be initialized with sarg_init before
+ * being passed to this function.
+ *
+ * If specified this function will call callback functions on the
+ * appearance of the corresponding options.
+ *
+ * @param root root object which should be used to parse arguments
+ * @param argv array of arguments to be parsed
+ * @param argc number of elements in argv
+ *
+ * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
+ */
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
 {
     int i, arg_idx, len, ret;
@@ -382,6 +411,15 @@ int sarg_parse(sarg_root *root, const char **argv, const int argc)
     return SARG_ERR_SUCCESS;
 }
 
+/**
+ * @brief Access the parsing result of the specified option.
+ *
+ * @param root root object that was used to parse arguments
+ * @param name short or long name of the option
+ * @param res result object for the given option
+ *
+ * @return SARG_ERR_SUCCESS on success or SARG_ERR_NOTFOUND if the option was not found
+ */
 int sarg_get(sarg_root *root, const char *name, sarg_result **res)
 {
     int arg_idx;
@@ -452,6 +490,21 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
     return SARG_ERR_SUCCESS;
 }
 
+/**
+ * @brief Prints a help text into the given buffer.
+ *
+ * The root object has to be initialized with sarg_init before
+ * being passed to this function.
+ *
+ * This function dynamically allocates memory for the given
+ * buffer, so that the help text fits into the buffer. outbuf
+ * has to be freed manually afterwards.
+ *
+ * @param root root object for creating help text
+ * @param outbuf dynamically allocated output buffer for help text
+ *
+ * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
+ */
 int sarg_help_text(sarg_root *root, char **outbuf)
 {
     int outlen, linelen,  i, offset, lineoff, ret;
@@ -523,6 +576,13 @@ _sarg_help_text_err:
     return ret;
 }
 
+/**
+ * @brief Prints a help text to stdout.
+ *
+ * @param root root object for creating help text
+ *
+ * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
+ */
 int sarg_help_print(sarg_root *root)
 {
     char *buf;
@@ -542,6 +602,16 @@ int sarg_help_cb(sarg_root *root, sarg_result *res)
     _SARG_UNUSED(res);
     return sarg_help_print(root);
 }
+
+#endif
+
+#ifndef SARG_NO_FILE
+
+int sarg_parse_file(sarg_root *root, const char *filename)
+{
+    return SARG_ERR_SUCCESS;
+}
+
 
 #endif
 
