@@ -490,6 +490,14 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
     return SARG_ERR_SUCCESS;
 }
 
+static char *_sarg_opt_type_str[COUNT] = {
+        "INT",
+        "UINT",
+        "DOUBLE",
+        "",
+        "STRING"
+};
+
 /**
  * @brief Prints a help text into the given buffer.
  *
@@ -509,6 +517,7 @@ int sarg_help_text(sarg_root *root, char **outbuf)
 {
     int outlen, linelen,  i, offset, lineoff, ret;
     char *linebuf;
+    char *type_name;
 
     // alloc output buffer and tmp buffer
     outlen = 256;
@@ -532,20 +541,21 @@ int sarg_help_text(sarg_root *root, char **outbuf)
     for(i = 0; i < root->opt_len; ++i) {
         lineoff = 0;
         linebuf[0] = '\0';
+        type_name = _sarg_opt_type_str[root->opts[i].type];
         // create output depending on which options are available
         if(root->opts[i].short_name && root->opts[i].long_name) {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s",
-                                 root->opts[i].short_name, root->opts[i].long_name);
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s %s",
+                                 root->opts[i].short_name, root->opts[i].long_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
         } else if(root->opts[i].short_name) {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s",
-                                 root->opts[i].short_name);
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s %s",
+                                 root->opts[i].short_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
         } else if(root->opts[i].long_name) {
-            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s",
-                                 root->opts[i].long_name);
+            ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s %s",
+                                 root->opts[i].long_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
                 goto _sarg_help_text_err;
         }
