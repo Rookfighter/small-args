@@ -607,11 +607,142 @@ int sarg_help_cb(sarg_root *root, sarg_result *res)
 
 #ifndef SARG_NO_FILE
 
-int sarg_parse_file(sarg_root *root, const char *filename)
+#include <stdio.h>
+
+int _sarg_argv_resize(char ***argv, int *argc)
 {
+    int argc_tmp = *argc;
+    char **argv_tmp = *argv;
+    int i;
+
+    *argv = (char **) malloc(sizeof(char *) * argc_tmp * 2);
+    if(!(*argv)) {
+        *argv = argv_tmp;
+        return SARG_ERR_ALLOC;
+    }
+    *argc = argc_tmp * 2;
+
+    memset(argv, 0, sizeof(char *) * argc_tmp);
+    for(i = 0; i < argc_tmp; ++i)
+        (*argv)[i] = argv_tmp[i];
+    free(argv_tmp);
+
     return SARG_ERR_SUCCESS;
 }
 
+int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
+                             int *currarg)
+{
+    int diff, ret, arglen;
+    char *sep;
+    char **argv_tmp;
+
+    diff = *argc - *currarg;
+    if(diff < 2) {
+        ret = _sarg_argv_resize(argv, argc);
+        if(ret != SARG_ERR_SUCCESS)
+            return ret;
+    }
+    argv_tmp = *argv;
+
+    // find separating space
+    sep = strchr(line, ' ');
+    if(!sep)
+        arglen = strlen(line) + 2;
+    else
+        arglen = (sep - line) + 2;
+
+    // write first arg into argv
+    argv_tmp[*currarg] = (char *) malloc(arglen);
+    if(!argv_tmp[*currarg])
+        return SARG_ERR_ALLOC;
+
+    ret = snprintf(argv_tmp[*currarg], arglen, "-%s", line);
+    ++(*currarg);
+    if(ret != arglen - 1)
+        return SARG_ERR_OTHER;
+
+    // write second argument if found into array
+    if(sep) {
+        ++sep;
+        arglen = strlen(sep) + 1;
+        argv_tmp[*currarg] = (char *) malloc(arglen);
+        if(!argv_tmp[*currarg])
+            return SARG_ERR_ALLOC;
+
+        ret = snprintf(argv_tmp[*currarg], arglen, "%s", line);
+        ++(*currarg);
+        if(ret != arglen - 1)
+            return SARG_ERR_OTHER;
+    }
+
+    return SARG_ERR_SUCCESS;
+}
+
+/**
+ * @brief Parse arguments from the given argument file.
+ *
+ * Options in the file are specified without preceding dashes
+ * '-'. If the option expects an additional parameter it has to
+ * be separated by a whitespace ' '. One line per option.
+ *
+ * The arguments in the file have to be specified in the
+ * following format:
+ *
+ * OPTION1 ARG
+ * OPTION2 ARG
+ * OPTION3
+ * ...
+ *
+ * @param root root object which should be used to parse arguments
+ * @param filename file which should be used to read arguments
+ *
+ * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
+ */
+int sarg_parse_file(sarg_root *root, const char *filename)
+{
+    char *line;
+    int argc, currarg, ret, i;
+    size_t len;
+    FILE *fp;
+    char **argv;
+
+    fp = fopen(filename , "r");
+    if(!fp)
+        return SARG_ERR_ERRNO;
+
+    currarg = 1;
+    argc = 16;
+    argv = (char **) malloc(sizeof(char *) * argc);
+    if(!argv)
+        return SARG_ERR_ALLOC;
+    memset(argv, 0, sizeof(char *) * argc);
+
+    // convert arguments in file to arg vector
+    line = NULL;
+    len = 0;
+    while((ret = getline(&line, &len, fp)) != -1) {
+        ret = _sarg_argv_add_from_line(line, &argv, &argc, &currarg);
+        if(ret != SARG_ERR_SUCCESS)
+            goto _sarg_parse_file_err;
+    }
+
+    // parse created arg vector
+    ret = sarg_parse(root, (const char **) argv, currarg);
+    if(ret != SARG_ERR_SUCCESS)
+        goto _sarg_parse_file_err;
+
+    for(i = 0; i < currarg; ++i)
+        free(argv[i]);
+    free(argv);
+    return SARG_ERR_SUCCESS;
+
+_sarg_parse_file_err:
+    for(i = 0; i < currarg; ++i)
+        free(argv[i]);
+    free(argv);
+    return ret;
+}
 
 #endif
 
