@@ -742,10 +742,7 @@ int sarg_parse_file(sarg_root *root, const char *filename)
     if(ret != SARG_ERR_SUCCESS)
         goto _sarg_parse_file_err;
 
-    for(i = 0; i < currarg; ++i)
-        free(argv[i]);
-    free(argv);
-    return SARG_ERR_SUCCESS;
+    ret = SARG_ERR_SUCCESS;
 
 _sarg_parse_file_err:
     for(i = 0; i < currarg; ++i)

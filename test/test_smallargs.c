@@ -468,3 +468,63 @@ CTEST_TEARDOWN(help)
 }
 
 #endif
+
+/* ==========================================================
+ * File Tests
+ * ========================================================== */
+
+#ifndef SARG_NO_FILE
+
+CTEST_DATA(file)
+{
+    sarg_root root;
+    char file[16];
+};
+
+CTEST_SETUP(file)
+{
+    int ret;
+    sarg_opt args[] = {
+        {"n", "count", "some count variable", INT, NULL},
+        {NULL, "file", "out file", STRING, NULL},
+        {"q", NULL, "enable quiet mode", BOOL, NULL},
+        {NULL, NULL, NULL, INT, NULL}
+    };
+
+    ret = sarg_init(&data->root, args, "test");
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    strcpy(data->file, "test_args.txt");
+}
+
+CTEST2(file, parse_success)
+{
+    int ret;
+    sarg_result *res;
+
+    ret = sarg_parse_file(&data->root, data->file);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(data->root.opt_len, data->root.res_len);
+
+    ret = sarg_get(&data->root, "n", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(15, res->int_val);
+
+    ret = sarg_get(&data->root, "q", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(1, res->bool_val);
+
+    ret = sarg_get(&data->root, "file", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(2, res->count);
+    ASSERT_STR("foo", res->str_val);
+}
+
+CTEST_TEARDOWN(file)
+{
+    sarg_destroy(&data->root);
+}
+
+#endif
