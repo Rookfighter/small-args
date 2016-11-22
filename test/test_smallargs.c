@@ -416,3 +416,55 @@ CTEST_TEARDOWN(parsing)
     _sarg_result_destroy(&data->result);
     sarg_destroy(&data->root);
 }
+
+/* ==========================================================
+ * Help Tests
+ * ========================================================== */
+
+#ifndef SARG_NO_PRINT
+
+CTEST_DATA(help)
+{
+    sarg_root root;
+    char *text;
+};
+
+CTEST_SETUP(help)
+{
+    int ret;
+    sarg_opt args[] = {
+        {"n", "count", "some count variable", INT, NULL},
+        {NULL, "file", "out file", STRING, NULL},
+        {"q", NULL, "enable quiet mode", BOOL, NULL},
+        {NULL, NULL, NULL, INT, NULL}
+    };
+
+    ret = sarg_init(&data->root, args, "test");
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+
+    data->text = NULL;
+}
+
+CTEST2(help, help_text)
+{
+    int ret;
+    char *exp_text = \
+            "Usage: test [OPTION]... [ARG]...\n\n" \
+            "  -n, --count INT             some count variable\n" \
+            "  --file STRING               out file\n" \
+            "  -q                          enable quiet mode\n";
+
+    ret = sarg_help_text(&data->root, &data->text);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_STR(exp_text, data->text);
+}
+
+CTEST_TEARDOWN(help)
+{
+    if(data->text)
+        free(data->text);
+    sarg_destroy(&data->root);
+}
+
+#endif
