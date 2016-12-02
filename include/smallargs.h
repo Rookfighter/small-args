@@ -104,9 +104,9 @@ void _sarg_opt_destroy(sarg_opt *opt)
 {
     if(opt->short_name)
         free(opt->short_name);
-    if(opt->short_name)
+    if(opt->long_name)
         free(opt->long_name);
-    if(opt->short_name)
+    if(opt->help)
         free(opt->help);
 }
 
@@ -516,8 +516,9 @@ static char *_sarg_opt_type_str[COUNT] = {
 int sarg_help_text(sarg_root *root, char **outbuf)
 {
     int outlen, linelen,  i, offset, lineoff, ret;
-    char *linebuf;
+    char *linebuf = NULL;
     char *type_name;
+    *outbuf = NULL;
 
     // alloc output buffer and tmp buffer
     outlen = 256;
@@ -528,15 +529,15 @@ int sarg_help_text(sarg_root *root, char **outbuf)
     linelen = 128;
     linebuf = (char *) malloc(linelen);
     if(!linebuf) {
-        free(*outbuf);
-        return SARG_ERR_ALLOC;
+        ret = SARG_ERR_ALLOC;
+        goto _sarg_help_text_exit;
     }
 
     offset = 0;
     ret = _sarg_snprintf(outbuf, &outlen, &offset,
                          "Usage: %s [OPTION]... [ARG]...\n\n", root->name);
     if(ret != SARG_ERR_SUCCESS)
-        goto _sarg_help_text_err;
+        goto _sarg_help_text_exit;
 
     for(i = 0; i < root->opt_len; ++i) {
         lineoff = 0;
@@ -547,42 +548,45 @@ int sarg_help_text(sarg_root *root, char **outbuf)
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s, --%s %s",
                                  root->opts[i].short_name, root->opts[i].long_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto _sarg_help_text_err;
+                goto _sarg_help_text_exit;
         } else if(root->opts[i].short_name) {
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  -%s %s",
                                  root->opts[i].short_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto _sarg_help_text_err;
+                goto _sarg_help_text_exit;
         } else if(root->opts[i].long_name) {
             ret = _sarg_snprintf(&linebuf, &linelen, &lineoff, "  --%s %s",
                                  root->opts[i].long_name, type_name);
             if(ret != SARG_ERR_SUCCESS)
-                goto _sarg_help_text_err;
+                goto _sarg_help_text_exit;
         }
 
         // print options string into outbuf
         ret = _sarg_snprintf(outbuf, &outlen, &offset, "%-30s", linebuf);
         if(ret != SARG_ERR_SUCCESS)
-            goto _sarg_help_text_err;
+            goto _sarg_help_text_exit;
 
         if(root->opts[i].help) {
             ret = _sarg_snprintf(outbuf, &outlen, &offset, "%s", root->opts[i].help);
             if(ret != SARG_ERR_SUCCESS)
-                goto _sarg_help_text_err;
+                goto _sarg_help_text_exit;
         }
 
         ret = _sarg_snprintf(outbuf, &outlen, &offset, "\n");
         if(ret != SARG_ERR_SUCCESS)
-            goto _sarg_help_text_err;
+            goto _sarg_help_text_exit;
     }
 
     free(linebuf);
     return SARG_ERR_SUCCESS;
 
-_sarg_help_text_err:
-    free(linebuf);
-    free(*outbuf);
-    *outbuf = NULL;
+_sarg_help_text_exit:
+    if(outbuf) {
+        free(*outbuf);
+        *outbuf = NULL;
+    }
+    if(linebuf)
+        free(linebuf);
     return ret;
 }
 
@@ -716,11 +720,11 @@ int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
  */
 int sarg_parse_file(sarg_root *root, const char *filename)
 {
-    char *line;
     int argc, currarg, ret, i;
     size_t len;
-    FILE *fp;
-    char **argv;
+    FILE *fp = NULL;
+    char **argv = NULL;
+    char *line = NULL;
 
     fp = fopen(filename , "r");
     if(!fp)
@@ -729,12 +733,13 @@ int sarg_parse_file(sarg_root *root, const char *filename)
     currarg = 1;
     argc = 16;
     argv = (char **) malloc(sizeof(char *) * argc);
-    if(!argv)
-        return SARG_ERR_ALLOC;
+    if(!argv) {
+        ret = SARG_ERR_ALLOC;
+        goto _sarg_parse_file_exit;
+    }
     memset(argv, 0, sizeof(char *) * argc);
 
     // convert arguments in file to arg vector
-    line = NULL;
     len = 0;
     while((ret = getline(&line, &len, fp)) != -1) {
         if(ret == 0)
@@ -744,22 +749,28 @@ int sarg_parse_file(sarg_root *root, const char *filename)
 
         ret = _sarg_argv_add_from_line(line, &argv, &argc, &currarg);
         if(ret != SARG_ERR_SUCCESS)
-            goto _sarg_parse_file_err;
+            goto _sarg_parse_file_exit;
     }
 
     // parse created arg vector
     ret = sarg_parse(root, (const char **) argv, currarg);
     if(ret != SARG_ERR_SUCCESS)
-        goto _sarg_parse_file_err;
+        goto _sarg_parse_file_exit;
 
     ret = SARG_ERR_SUCCESS;
 
-_sarg_parse_file_err:
-    for(i = 0; i < currarg; ++i)
-        free(argv[i]);
-    free(argv);
+_sarg_parse_file_exit:
     if(line)
         free(line);
+    if(argv) {
+        for(i = 0; i < currarg; ++i) {
+            if(argv[i])
+                free(argv[i]);
+        }
+        free(argv);
+    }
+    if(fp)
+        fclose(fp);
     return ret;
 }
 
