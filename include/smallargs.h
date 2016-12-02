@@ -321,7 +321,7 @@ int _sarg_parse_double(const char *arg, sarg_result *res)
 int _sarg_parse_bool(const char *arg, sarg_result *res)
 {
     _SARG_UNUSED(arg);
-    ++res->bool_val;
+    res->bool_val = !res->bool_val;
 
     return SARG_ERR_SUCCESS;
 }
@@ -367,12 +367,6 @@ static _sarg_parse_func _sarg_parse_funcs[COUNT] = {
 int sarg_parse(sarg_root *root, const char **argv, const int argc)
 {
     int i, arg_idx, len, ret;
-
-    // reset results
-    for(i = 0; i < root->res_len; ++i) {
-        _sarg_result_destroy(&root->results[i]);
-        _sarg_result_init(&root->results[i], root->opts[i].type);
-    }
 
     for(i = 1; i < argc; ++i) {
         // argument has to have at least 2 chars

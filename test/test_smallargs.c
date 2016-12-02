@@ -295,7 +295,17 @@ CTEST2(parsing, parse_double_fail)
  * parse_BOOL
  * ========================================================== */
 
-CTEST2(parsing, parse_bool_success)
+CTEST2(parsing, parse_bool_single)
+{
+    data->result.type = BOOL;
+
+    int ret = _sarg_parse_bool(NULL, &data->result);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, data->result.bool_val);
+}
+
+CTEST2(parsing, parse_bool_invert)
 {
     data->result.type = BOOL;
 
@@ -307,7 +317,7 @@ CTEST2(parsing, parse_bool_success)
     ret = _sarg_parse_bool(NULL, &data->result);
 
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
-    ASSERT_EQUAL(2, data->result.bool_val);
+    ASSERT_EQUAL(0, data->result.bool_val);
 }
 
 /* ==========================================================
@@ -579,6 +589,37 @@ CTEST2(file, parse_untrimmed)
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
     ASSERT_EQUAL(1, res->count);
     ASSERT_EQUAL(1, res->bool_val);
+
+    ret = sarg_get(&data->root, "file", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(2, res->count);
+    ASSERT_STR("foo", res->str_val);
+}
+
+CTEST2(file, parse_overwrite)
+{
+    int ret;
+    sarg_result *res;
+    const int argc = 6;
+    const char *argv[6] = {"", "-n","10", "-q", "-q", "-q"};
+
+    ret = sarg_parse_file(&data->root, data->file1);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(data->root.opt_len, data->root.res_len);
+
+    ret = sarg_parse(&data->root, argv, argc);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+
+    ret = sarg_get(&data->root, "n", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(2, res->count);
+    ASSERT_EQUAL(10, res->int_val);
+
+    ret = sarg_get(&data->root, "q", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(4, res->count);
+    ASSERT_EQUAL(0, res->bool_val);
 
     ret = sarg_get(&data->root, "file", &res);
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
