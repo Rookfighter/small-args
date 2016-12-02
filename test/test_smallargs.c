@@ -5,10 +5,18 @@
  *      Author: fabian
  */
 
+#define CTEST_MAIN
+#define CTEST_SEGFAULT
+
 #include <limits.h>
 #include <smallargs.h>
 #include <ctest.h>
 #include <stdio.h>
+
+int main(int argc, const char *argv[])
+{
+    return ctest_main(argc, argv);
+}
 
 #define UNUSED(e) ((void) e)
 

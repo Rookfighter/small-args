@@ -640,12 +640,28 @@ int _sarg_argv_resize(char ***argv, int *argc)
     return SARG_ERR_SUCCESS;
 }
 
+int _sarg_argv_add_arg(const char *fmt, const char *arg, int arglen, char **argv, int *currarg)
+{
+    int ret;
+
+    argv[*currarg] = (char *) malloc(arglen);
+    if(!argv[*currarg])
+        return SARG_ERR_ALLOC;
+
+    ret = snprintf(argv[*currarg], arglen, fmt, arg);
+    argv[*currarg][arglen-1] = '\0';
+    ++(*currarg);
+    if(ret < 0)
+        return SARG_ERR_OTHER;
+
+    return SARG_ERR_SUCCESS;
+}
+
 int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
                              int *currarg)
 {
     int diff, ret, arglen;
     char *sep;
-    char **argv_tmp;
 
     diff = *argc - *currarg;
     if(diff < 2) {
@@ -653,37 +669,26 @@ int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
         if(ret != SARG_ERR_SUCCESS)
             return ret;
     }
-    argv_tmp = *argv;
 
     // find separating space
     sep = strchr(line, ' ');
-    if(!sep)
-        arglen = strlen(line) + 2;
-    else
-        arglen = (sep - line) + 2;
+    arglen = strlen(line) + 2;
+    if(sep)
+        arglen -= strlen(sep);
 
     // write first arg into argv
-    argv_tmp[*currarg] = (char *) malloc(arglen);
-    if(!argv_tmp[*currarg])
-        return SARG_ERR_ALLOC;
-
-    ret = snprintf(argv_tmp[*currarg], arglen, "-%s", line);
-    ++(*currarg);
-    if(ret != arglen - 1)
-        return SARG_ERR_OTHER;
+    ret = _sarg_argv_add_arg("-%s", line, arglen, *argv, currarg);
+    if(ret != SARG_ERR_SUCCESS)
+        return ret;
 
     // write second argument if found into array
     if(sep) {
         ++sep;
         arglen = strlen(sep) + 1;
-        argv_tmp[*currarg] = (char *) malloc(arglen);
-        if(!argv_tmp[*currarg])
-            return SARG_ERR_ALLOC;
 
-        ret = snprintf(argv_tmp[*currarg], arglen, "%s", line);
-        ++(*currarg);
-        if(ret != arglen - 1)
-            return SARG_ERR_OTHER;
+        _sarg_argv_add_arg("%s", sep, arglen, *argv, currarg);
+        if(ret != SARG_ERR_SUCCESS)
+            return ret;
     }
 
     return SARG_ERR_SUCCESS;
@@ -732,6 +737,11 @@ int sarg_parse_file(sarg_root *root, const char *filename)
     line = NULL;
     len = 0;
     while((ret = getline(&line, &len, fp)) != -1) {
+        if(ret == 0)
+            continue;
+        if(line[ret-1] == '\n')
+            line[ret-1] = '\0';
+
         ret = _sarg_argv_add_from_line(line, &argv, &argc, &currarg);
         if(ret != SARG_ERR_SUCCESS)
             goto _sarg_parse_file_err;
@@ -748,6 +758,8 @@ _sarg_parse_file_err:
     for(i = 0; i < currarg; ++i)
         free(argv[i]);
     free(argv);
+    if(line)
+        free(line);
     return ret;
 }
 
