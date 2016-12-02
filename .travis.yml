@@ -1,0 +1,11 @@
+language: c
+compiler:
+  - gcc
+  - clang
+before_install:
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install -qq build-essential cmake
+  - script/get-deps.sh
+script: mkdir -p build && cd build && cmake .. && make
+test: build/sarg_test_c
