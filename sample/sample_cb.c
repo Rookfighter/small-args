@@ -11,8 +11,11 @@
 #include <assert.h>
 
 #define UNUSED(x) ((void)x)
+#define FILENAME_LEN 256
 
 static sarg_root root;
+static char filename[FILENAME_LEN];
+static int got_file = 0;
 
 static int help_cb(const sarg_result *res)
 {
@@ -52,12 +55,22 @@ static int say_cb(const sarg_result *res)
     return SARG_ERR_SUCCESS;
 }
 
+static int file_cb(const sarg_result *res)
+{
+    got_file = 1;
+    strncpy(filename, res->str_val, FILENAME_LEN);
+    filename[FILENAME_LEN-1] = '\0';
+    return SARG_ERR_SUCCESS;
+}
+
+
 static sarg_opt my_args[] = {
     {"h", "help", "show help text", BOOL, help_cb},
     {"v", "verbose", "increase verbosity", BOOL, verbose_cb},
     {"c", "count", "count up to this number", INT, count_cb},
     {NULL, "root", "calculate square root of this number", DOUBLE, root_cb},
     {NULL, "say", "print the given text", STRING, say_cb},
+    {"f", "file", "file to read arguments from", STRING, file_cb},
     {NULL, NULL, NULL, INT, NULL}
 };
 
@@ -72,6 +85,15 @@ int main(int argc, const char **argv)
         sarg_help_print(&root);
         sarg_destroy(&root);
         return -1;
+    }
+
+    if(got_file) {
+        ret = sarg_parse_file(&root, filename);
+        if(ret != SARG_ERR_SUCCESS) {
+            printf("Error: Parsing file failed\n");
+            sarg_destroy(&root);
+            return -1;
+        }
     }
 
     sarg_destroy(&root);

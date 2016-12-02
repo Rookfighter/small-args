@@ -16,6 +16,7 @@ static sarg_opt my_args[] = {
     {"c", "count", "count up to this number", INT, NULL},
     {NULL, "root", "calculate square root of this number", DOUBLE, NULL},
     {NULL, "say", "print the given text", STRING, NULL},
+    {"f", "file", "file to read arguments from", STRING, NULL},
     {NULL, NULL, NULL, INT, NULL}
 };
 
@@ -47,6 +48,18 @@ int main(int argc, const char **argv)
         sarg_help_print(&root);
         sarg_destroy(&root);
         return 0;
+    }
+
+    // check for file
+    ret = sarg_get(&root, "f", &res);
+    assert(ret == SARG_ERR_SUCCESS);
+    if(res->count) {
+        ret = sarg_parse_file(&root, res->str_val);
+        if(ret != SARG_ERR_SUCCESS) {
+            printf("Error: Parsing file failed\n");
+            sarg_destroy(&root);
+            return -1;
+        }
     }
 
     // check for verbosity

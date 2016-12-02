@@ -46,6 +46,7 @@
 #define SARG_ERR_PARSE        -4
 #define SARG_ERR_NOTFOUND     -5
 #define SARG_ERR_ALLOC        -6
+#define SARG_ERR_ABORT        -7
 
 #define _SARG_UNUSED(e) ((void) e)
 #define _SARG_IS_SHORT_ARG(s) (s[0] == '-' && s[1] != '-')
