@@ -1,10 +1,10 @@
-# SmallArgs ![travisimg](https://travis-ci.org/Rookfighter/small-args.svg?branch=master)
+# Small Args ![travisimg](https://travis-ci.org/Rookfighter/small-args.svg?branch=master)
 
-SmallArgs is a lightweight header-only crossplatform argument parser for the C / C++ programming languages.
+Small Args is a lightweight header-only crossplatform argument parser for the C / C++ programming languages.
 The library focuses on simplicity and high compatibility to various platforms and compilers.
 It implements Posix style argument parsing, but is not compliant to the standard.
 
-SmallArgs' parsing capabilities are kept minimal and focus on daily and most important features.
+Small Args' parsing capabilities are kept minimal and focus on daily and most important features.
 If you feel like any important feature is missing, please contact me or implement it yourself and submit a pull request.
 
 ## Install
@@ -15,7 +15,7 @@ Simply copy the header files into your project and include them in your source c
 
 ### C
 
-For using SmallArgs include the C header file. 
+For using Small Args include the C header file. 
 
 ```C
 #include <smallargs.h>
@@ -32,7 +32,7 @@ sarg_opt my_opts[] = {
 };
 ```
 
-Available types for options in SmallArgs are:
+Available types for options in Small Args are:
 
 * ```int```
 * ```unsigend int```
