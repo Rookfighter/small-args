@@ -59,7 +59,7 @@ static int file_cb(const sarg_result *res)
 {
     got_file = 1;
     strncpy(filename, res->str_val, FILENAME_LEN);
-    filename[FILENAME_LEN-1] = '\0';
+    filename[FILENAME_LEN - 1] = '\0';
     return SARG_ERR_SUCCESS;
 }
 

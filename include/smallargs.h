@@ -486,11 +486,11 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
 }
 
 static char *_sarg_opt_type_str[COUNT] = {
-        "INT",
-        "UINT",
-        "DOUBLE",
-        "",
-        "STRING"
+    "INT",
+    "UINT",
+    "DOUBLE",
+    "",
+    "STRING"
 };
 
 /**
@@ -615,22 +615,22 @@ int sarg_help_print(sarg_root *root)
 
 char *_sarg_trim(char *str)
 {
-  char *end;
+    char *end;
 
-  // Trim leading space
-  while(isspace((unsigned char)*str)) str++;
+    // Trim leading space
+    while(isspace((unsigned char)*str)) str++;
 
-  if(*str == 0)
+    if(*str == 0)
+        return str;
+
+    // Trim trailing space
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    // Write new null terminator
+    *(end + 1) = '\0';
+
     return str;
-
-  // Trim trailing space
-  end = str + strlen(str) - 1;
-  while(end > str && isspace((unsigned char)*end)) end--;
-
-  // Write new null terminator
-  *(end+1) = '\0';
-
-  return str;
 }
 
 int _sarg_argv_resize(char ***argv, int *argc)
@@ -654,7 +654,8 @@ int _sarg_argv_resize(char ***argv, int *argc)
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_argv_add_arg(const char *fmt, const char *arg, int arglen, char **argv, int *currarg)
+int _sarg_argv_add_arg(const char *fmt, const char *arg, int arglen,
+                       char **argv, int *currarg)
 {
     int ret;
 
@@ -663,7 +664,7 @@ int _sarg_argv_add_arg(const char *fmt, const char *arg, int arglen, char **argv
         return SARG_ERR_ALLOC;
 
     ret = snprintf(argv[*currarg], arglen, fmt, arg);
-    argv[*currarg][arglen-1] = '\0';
+    argv[*currarg][arglen - 1] = '\0';
     ++(*currarg);
     if(ret < 0)
         return SARG_ERR_OTHER;

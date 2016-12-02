@@ -467,10 +467,10 @@ CTEST2(help, help_text)
 {
     int ret;
     char *exp_text = \
-            "Usage: test [OPTION]... [ARG]...\n\n" \
-            "  -n, --count INT             some count variable\n" \
-            "  --file STRING               out file\n" \
-            "  -q                          enable quiet mode\n";
+                     "Usage: test [OPTION]... [ARG]...\n\n" \
+                     "  -n, --count INT             some count variable\n" \
+                     "  --file STRING               out file\n" \
+                     "  -q                          enable quiet mode\n";
 
     ret = sarg_help_text(&data->root, &data->text);
 
@@ -601,7 +601,7 @@ CTEST2(file, parse_overwrite)
     int ret;
     sarg_result *res;
     const int argc = 6;
-    const char *argv[6] = {"", "-n","10", "-q", "-q", "-q"};
+    const char *argv[6] = {"", "-n", "10", "-q", "-q", "-q"};
 
     ret = sarg_parse_file(&data->root, data->file1);
 
