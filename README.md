@@ -1,4 +1,4 @@
-# SmallArgs
+# SmallArgs ![travisimg](https://travis-ci.org/Rookfighter/small-args.svg?branch=master)
 
 SmallArgs is a lightweight header-only crossplatform argument parser for the C / C++ programming languages.
 The library focuses on simplicity and high compatibility to various platforms and compilers.
