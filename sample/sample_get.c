@@ -1,7 +1,7 @@
 /*
- * sample.c
+ * sample_get.c
  *
- *  Created on: 14 Oct 2016
+ *  Created on: 02 Dec 2016
  *      Author: Fabian Meyer
  */
 
@@ -31,7 +31,8 @@ int main(int argc, const char **argv)
     ret = sarg_parse(&root, argv, argc);
     if(ret != SARG_ERR_SUCCESS) {
         printf("Parsing failed\n");
-        //sarg_print_help(&root);
+        sarg_help_print(&root);
+        sarg_destroy(&root);
         return -1;
     }
 
@@ -44,7 +45,8 @@ int main(int argc, const char **argv)
 
     if(res->bool_val) {
         sarg_help_print(&root);
-        return -1;
+        sarg_destroy(&root);
+        return 0;
     }
 
     // check for verbosity
@@ -80,7 +82,7 @@ int main(int argc, const char **argv)
         printf("you say: %s\n", res->str_val);
     }
 
-
+    sarg_destroy(&root);
 
     return 0;
 }

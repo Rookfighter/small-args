@@ -11,8 +11,9 @@ include_directories(
 )
 
 file(GLOB TEST_C_SRC "test/*.c")
-file(GLOB SAMPLE_C_SRC "sample/*.c")
 
 add_executable(sarg_test_c ${TEST_C_SRC})
-add_executable(sarg_sample_c ${SAMPLE_C_SRC})
-target_link_libraries(sarg_sample_c m)
+add_executable(sarg_sample_get_c "sample/sample_get.c")
+add_executable(sarg_sample_cb_c  "sample/sample_cb.c")
+target_link_libraries(sarg_sample_get_c m)
+target_link_libraries(sarg_sample_cb_c m)

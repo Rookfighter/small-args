@@ -74,7 +74,7 @@ typedef struct _sarg_result {
     };
 } sarg_result;
 
-typedef int (*sarg_opt_cb)(sarg_result *);
+typedef int (*sarg_opt_cb)(const sarg_result *);
 
 typedef struct _sarg_opt {
     char *short_name;
@@ -603,12 +603,6 @@ int sarg_help_print(sarg_root *root)
     free(buf);
 
     return SARG_ERR_SUCCESS;
-}
-
-int sarg_help_cb(sarg_root *root, sarg_result *res)
-{
-    _SARG_UNUSED(res);
-    return sarg_help_print(root);
 }
 
 #endif
