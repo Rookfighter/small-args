@@ -37,7 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define SARG_VERSION "0.1"
+#define SARG_VERSION "0.1.0"
 
 #define SARG_ERR_SUCCESS       0
 #define SARG_ERR_ERRNO        -1
