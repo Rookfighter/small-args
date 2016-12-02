@@ -513,9 +513,9 @@ CTEST_SETUP(file)
 
     ret = sarg_init(&data->root, args, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
-    strcpy(data->file1, "test_args.txt");
-    strcpy(data->file2, "test_args_empty_lines.txt");
-    strcpy(data->file3, "test_args_untrimmed.txt");
+    strcpy(data->file1, "test/test_args.txt");
+    strcpy(data->file2, "test/test_args_empty_lines.txt");
+    strcpy(data->file3, "test/test_args_untrimmed.txt");
 }
 
 CTEST2(file, parse_success)
