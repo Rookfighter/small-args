@@ -1,0 +1,8 @@
+
+count 15
+file bar
+	
+q
+  
+
+file foo

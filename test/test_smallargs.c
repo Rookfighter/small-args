@@ -486,7 +486,9 @@ CTEST_TEARDOWN(help)
 CTEST_DATA(file)
 {
     sarg_root root;
-    char file[16];
+    char file1[32];
+    char file2[32];
+    char file3[32];
 };
 
 CTEST_SETUP(file)
@@ -501,7 +503,9 @@ CTEST_SETUP(file)
 
     ret = sarg_init(&data->root, args, "test");
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
-    strcpy(data->file, "test_args.txt");
+    strcpy(data->file1, "test_args.txt");
+    strcpy(data->file2, "test_args_empty_lines.txt");
+    strcpy(data->file3, "test_args_untrimmed.txt");
 }
 
 CTEST2(file, parse_success)
@@ -509,7 +513,59 @@ CTEST2(file, parse_success)
     int ret;
     sarg_result *res;
 
-    ret = sarg_parse_file(&data->root, data->file);
+    ret = sarg_parse_file(&data->root, data->file1);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(data->root.opt_len, data->root.res_len);
+
+    ret = sarg_get(&data->root, "n", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(15, res->int_val);
+
+    ret = sarg_get(&data->root, "q", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(1, res->bool_val);
+
+    ret = sarg_get(&data->root, "file", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(2, res->count);
+    ASSERT_STR("foo", res->str_val);
+}
+
+CTEST2(file, parse_empty_lines)
+{
+    int ret;
+    sarg_result *res;
+
+    ret = sarg_parse_file(&data->root, data->file2);
+
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(data->root.opt_len, data->root.res_len);
+
+    ret = sarg_get(&data->root, "n", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(15, res->int_val);
+
+    ret = sarg_get(&data->root, "q", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(1, res->count);
+    ASSERT_EQUAL(1, res->bool_val);
+
+    ret = sarg_get(&data->root, "file", &res);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+    ASSERT_EQUAL(2, res->count);
+    ASSERT_STR("foo", res->str_val);
+}
+
+CTEST2(file, parse_untrimmed)
+{
+    int ret;
+    sarg_result *res;
+
+    ret = sarg_parse_file(&data->root, data->file3);
 
     ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
     ASSERT_EQUAL(data->root.opt_len, data->root.res_len);

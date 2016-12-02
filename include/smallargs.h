@@ -622,6 +622,27 @@ int sarg_help_cb(sarg_root *root, sarg_result *res)
 #ifndef SARG_NO_FILE
 
 #include <stdio.h>
+#include <ctype.h>
+
+char *_sarg_trim(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator
+  *(end+1) = '\0';
+
+  return str;
+}
 
 int _sarg_argv_resize(char ***argv, int *argc)
 {
@@ -687,7 +708,7 @@ int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
 
     // write second argument if found into array
     if(sep) {
-        ++sep;
+        sep = _sarg_trim(sep);
         arglen = strlen(sep) + 1;
 
         _sarg_argv_add_arg("%s", sep, arglen, *argv, currarg);
@@ -725,6 +746,7 @@ int sarg_parse_file(sarg_root *root, const char *filename)
     FILE *fp = NULL;
     char **argv = NULL;
     char *line = NULL;
+    char *line_trim = NULL;
 
     fp = fopen(filename , "r");
     if(!fp)
@@ -742,12 +764,11 @@ int sarg_parse_file(sarg_root *root, const char *filename)
     // convert arguments in file to arg vector
     len = 0;
     while((ret = getline(&line, &len, fp)) != -1) {
-        if(ret == 0)
+        line_trim = _sarg_trim(line);
+        if(strlen(line_trim) == 0)
             continue;
-        if(line[ret-1] == '\n')
-            line[ret-1] = '\0';
 
-        ret = _sarg_argv_add_from_line(line, &argv, &argc, &currarg);
+        ret = _sarg_argv_add_from_line(line_trim, &argv, &argc, &currarg);
         if(ret != SARG_ERR_SUCCESS)
             goto _sarg_parse_file_exit;
     }
