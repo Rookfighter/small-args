@@ -64,7 +64,7 @@ static int file_cb(const sarg_result *res)
 }
 
 
-static sarg_opt my_args[] = {
+static sarg_opt my_opts[] = {
     {"h", "help", "show help text", BOOL, help_cb},
     {"v", "verbose", "increase verbosity", BOOL, verbose_cb},
     {"c", "count", "count up to this number", INT, count_cb},
@@ -76,7 +76,7 @@ static sarg_opt my_args[] = {
 
 int main(int argc, const char **argv)
 {
-    int ret = sarg_init(&root, my_args, "sarg_sample_c");
+    int ret = sarg_init(&root, my_opts, "sarg_sample_c");
     assert(ret == SARG_ERR_SUCCESS);
 
     ret = sarg_parse(&root, argv, argc);
