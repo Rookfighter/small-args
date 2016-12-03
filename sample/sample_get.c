@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
         printf("%f\n", sqrt(res->double_val));
     }
 
-    // calculate square root of given number
+    // say something
     ret = sarg_get(&root, "say", &res);
     assert(ret == SARG_ERR_SUCCESS);
     if(res->count > 0) {

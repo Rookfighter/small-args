@@ -93,6 +93,12 @@ typedef struct _sarg_root {
     int res_len;
 } sarg_root;
 
+const char * sarg_strerror(const int errval)
+{
+    _SARG_UNUSED(errval);
+    return "small args error";
+}
+
 void _sarg_result_destroy(sarg_result *res)
 {
     if(res->type == STRING && res->str_val) {
@@ -147,7 +153,7 @@ void _sarg_result_init(sarg_result *res, sarg_opt_type type)
     res->type = type;
 }
 
-int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
+int _sarg_opt_duplicate(sarg_opt *dest, const sarg_opt *src)
 {
     if(src->short_name) {
         dest->short_name = (char *) malloc(strlen(src->short_name) + 1);
@@ -176,7 +182,7 @@ int _sarg_opt_duplicate(sarg_opt *dest, sarg_opt *src)
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_opt_len(sarg_opt *options)
+int _sarg_opt_len(const sarg_opt *options)
 {
     int i;
 
@@ -194,7 +200,7 @@ int _sarg_opt_len(sarg_opt *options)
  *
  * @return SARG_ERR_SUCCESS on success or a SARG_ERR_* code otherwise
  */
-int sarg_init(sarg_root *root, sarg_opt *options, const char *name)
+int sarg_init(sarg_root *root, const sarg_opt *options, const char *name)
 {
     int i, ret, len;
 
@@ -332,7 +338,7 @@ int _sarg_parse_str(const char *arg, sarg_result *res)
     if(res->str_val)
         free(res->str_val);
 
-    res->str_val = malloc(strlen(arg) + 1);
+    res->str_val = (char*) malloc(strlen(arg) + 1);
     if(!res->str_val)
         return SARG_ERR_ALLOC;
 
@@ -452,7 +458,7 @@ int _sarg_buf_resize(char **buf, int *len)
     return SARG_ERR_SUCCESS;
 }
 
-int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
+int _sarg_snprintf(char **buf, int *len, int *off, const char *fmt, ...)
 {
     va_list args;
     int ret, write_len;
@@ -485,7 +491,7 @@ int _sarg_snprintf(char **buf, int *len, int *off, char *fmt, ...)
     return SARG_ERR_SUCCESS;
 }
 
-static char *_sarg_opt_type_str[COUNT] = {
+static const char *_sarg_opt_type_str[COUNT] = {
     "INT",
     "UINT",
     "DOUBLE",
@@ -512,7 +518,7 @@ int sarg_help_text(sarg_root *root, char **outbuf)
 {
     int outlen, linelen,  i, offset, lineoff, ret;
     char *linebuf = NULL;
-    char *type_name;
+    const char *type_name;
     *outbuf = NULL;
 
     // alloc output buffer and tmp buffer
@@ -686,7 +692,7 @@ int _sarg_argv_add_from_line(const char *line, char ***argv, int *argc,
     }
 
     // find separating space
-    sep = strchr(line, ' ');
+    sep = strchr((char*) line, ' ');
     arglen = strlen(line) + 2;
     if(sep)
         arglen -= strlen(sep);
