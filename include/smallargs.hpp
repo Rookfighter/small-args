@@ -112,9 +112,9 @@ namespace sarg
                 _sarg_opt_destroy(&opts_[i]);
         }
 
-        Root &add(const std::string &shortName,
-                const std::string &longName,
-                const std::string &help,
+        Root &add(const char *shortName,
+                const char *longName,
+                const char *help,
                 const optType type,
                 const optCallback cb)
         {
@@ -124,9 +124,9 @@ namespace sarg
             int ret;
             opts_.resize(opts_.size() + 1);
             ret = _sarg_opt_init(&opts_.back(),
-                    shortName.c_str(),
-                    longName.c_str(),
-                    help.c_str(),
+                    shortName,
+                    longName,
+                    help,
                     type,
                     cb);
             if(ret != SARG_ERR_SUCCESS)
