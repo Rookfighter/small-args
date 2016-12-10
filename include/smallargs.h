@@ -153,33 +153,40 @@ void _sarg_result_init(sarg_result *res, sarg_opt_type type)
     res->type = type;
 }
 
-int _sarg_opt_duplicate(sarg_opt *dest, const sarg_opt *src)
+int _sarg_opt_init(sarg_opt *opt, const char *short_name, const char *long_name, const char *help, const sarg_opt_type type, sarg_opt_cb cb)
 {
-    if(src->short_name) {
-        dest->short_name = (char *) malloc(strlen(src->short_name) + 1);
-        if(!dest->short_name)
-            return SARG_ERR_ALLOC;
-        strcpy(dest->short_name, src->short_name);
+    memset(opt, 0, sizeof(sarg_opt));
+
+    if(short_name) {
+        opt->short_name = (char *) malloc(strlen(short_name) + 1);
+       if(!opt->short_name)
+           return SARG_ERR_ALLOC;
+       strcpy(opt->short_name, short_name);
     }
 
-    if(src->long_name) {
-        dest->long_name = (char *) malloc(strlen(src->long_name) + 1);
-        if(!dest->long_name)
+    if(long_name) {
+        opt->long_name = (char *) malloc(strlen(long_name) + 1);
+        if(!opt->long_name)
             return SARG_ERR_ALLOC;
-        strcpy(dest->long_name, src->long_name);
+        strcpy(opt->long_name, long_name);
     }
 
-    if(src->help) {
-        dest->help = (char *) malloc(strlen(src->help) + 1);
-        if(!dest->help)
+    if(help) {
+        opt->help = (char *) malloc(strlen(help) + 1);
+        if(!opt->help)
             return SARG_ERR_ALLOC;
-        strcpy(dest->help, src->help);
+        strcpy(opt->help, help);
     }
 
-    dest->callback = src->callback;
-    dest->type = src->type;
+    opt->callback = cb;
+    opt->type = type;
 
     return SARG_ERR_SUCCESS;
+}
+
+int _sarg_opt_duplicate(sarg_opt *dest, const sarg_opt *src)
+{
+    return _sarg_opt_init(dest, src->short_name, src->long_name, src->help, src->type, src->callback);
 }
 
 int _sarg_opt_len(const sarg_opt *options)
