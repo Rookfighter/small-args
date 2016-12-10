@@ -10,22 +10,20 @@
 #include <cmath>
 #include <cassert>
 
-static sarg::opt myOpts[] = {
-    {"h", "help", "show help text", BOOL, NULL},
-    {"v", "verbose", "increase verbosity", BOOL, NULL},
-    {"c", "count", "count up to this number", INT, NULL},
-    {NULL, "root", "calculate square root of this number", DOUBLE, NULL},
-    {NULL, "say", "print the given text", STRING, NULL},
-    {"f", "file", "file to read arguments from", STRING, NULL},
-    {NULL, NULL, NULL, INT, NULL}
-};
-
 int main(const int argc, const char **argv)
 {
-    sarg::Root root(myOpts, "sarg_sample_cpp");
+    sarg::Root root("sarg_sample_cpp");
     int i;
 
     try {
+        root.add("h", "help", "show help text", BOOL, NULL)
+            .add("v", "verbose", "increase verbosity", BOOL, NULL)
+            .add("c", "count", "count up to this number", INT, NULL)
+            .add(NULL, "root", "calculate square root of this number", DOUBLE, NULL)
+            .add(NULL, "say", "print the given text", STRING, NULL)
+            .add("f", "file", "file to read arguments from", STRING, NULL)
+            .init();
+
         root.parse(argv, argc);
     } catch (sarg::Error &e) {
         std::cout << "Parsing failed" << std::endl;

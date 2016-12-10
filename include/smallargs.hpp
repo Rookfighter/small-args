@@ -37,6 +37,7 @@
 #include <string>
 #include <stdexcept>
 #include <sstream>
+#include <vector>
 
 extern "C" {
 #include "smallargs.h"
@@ -44,8 +45,10 @@ extern "C" {
 
 namespace sarg
 {
+    typedef sarg_opt_type optType;
     typedef sarg_opt opt;
     typedef sarg_result result;
+    typedef sarg_opt_cb optCallback;
 
     class Error : public std::exception
     {
@@ -81,20 +84,18 @@ namespace sarg
     class Root
     {
     private:
+        std::string name_;
         sarg_root root_;
+        std::vector<opt> opts_;
+        bool init_;
 
-        Root() {}
     public:
-        Root(const opt *opts, const std::string& name)
-        {
-            int ret;
-
-            ret = sarg_init(&root_, opts, name.c_str());
-            if(ret != SARG_ERR_SUCCESS)
-                throw Error(ret);
-        }
+        Root(const std::string& name)
+        :name_(name), init_(false)
+        {}
 
         Root(const Root& root)
+        :name_(root.name_), init_(false)
         {
             //TODO
             _SARG_UNUSED(root);
@@ -103,7 +104,48 @@ namespace sarg
 
         ~Root()
         {
+            unsigned int i;
+
             sarg_destroy(&root_);
+
+            for(i = 0; i < opts_.size(); ++i)
+                _sarg_opt_destroy(&opts_[i]);
+        }
+
+        Root &add(const std::string &shortName,
+                const std::string &longName,
+                const std::string &help,
+                const optType type,
+                const optCallback cb)
+        {
+            if(init_)
+                throw std::logic_error("root was already initialized");
+
+            int ret;
+            opts_.resize(opts_.size() + 1);
+            ret = _sarg_opt_init(&opts_.back(),
+                    shortName.c_str(),
+                    longName.c_str(),
+                    help.c_str(),
+                    type,
+                    cb);
+            if(ret != SARG_ERR_SUCCESS)
+                throw Error(ret);
+
+            return *this;
+        }
+
+        void init()
+        {
+            int ret;
+            opt nullOpt = {NULL, NULL, NULL, INT, NULL};
+            opts_.push_back(nullOpt);
+
+            ret = sarg_init(&root_, &opts_[0], name_.c_str());
+            if(ret != SARG_ERR_SUCCESS)
+                throw Error(ret);
+
+            init_ = true;
         }
 
         const result& operator[](const std::string &key)
