@@ -1,11 +1,17 @@
 language: c
+
 compiler:
-  - gcc
-  - clang
+    - gcc
+    - clang
+
+dist: trusty
+
+sudo: required
+
 before_install:
-  - sudo apt-get update -qq
-install:
-  - sudo apt-get install -qq build-essential cmake
-  - script/get-deps.sh
-script: mkdir -p build && cd build && cmake .. && make
-test: build/sarg_test_c
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq build-essential cmake clang
+
+install: ./scripts/install-deps.sh
+
+script: ./scripts/travis-build.sh
