@@ -3,6 +3,8 @@
  *
  *  Created on: 03 Dec 2016
  *      Author: Fabian Meyer
+ *
+ * Example on how to access options using the index operator.
  */
 
 #include <smallargs.hpp>
