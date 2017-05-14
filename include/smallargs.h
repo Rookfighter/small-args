@@ -54,6 +54,12 @@
 #define _SARG_IS_HEX_NUM(s) (s[0] == '0' && s[1] == 'x')
 #define _SARG_IS_OCT_NUM(s) (s[0] == '0' && strchr("1234567", s[1]) != NULL)
 
+
+#define sarg_foreach(root, it) \
+    for(_sarg_iterator_init((it), (root)); \
+        _sarg_iterator_has_next((it)); \
+        _sarg_iterator_next((it)))
+
 typedef enum _sarg_opt_type {
     INT = 0,
     UINT,
@@ -92,6 +98,44 @@ typedef struct _sarg_root {
     sarg_result *results;
     int res_len;
 } sarg_root;
+
+typedef struct _sarg_iterator {
+    sarg_root *root;
+    sarg_result *result;
+    char *name;
+    int idx;
+} sarg_iterator;
+
+void _sarg_iterator_init(sarg_iterator *it, sarg_root *root)
+{
+    it->root = root;
+    it->result = NULL;
+    it->name = NULL;
+    it->idx = 0;
+
+    if(root->opt_len > 0)
+    {
+        it->result = &root->results[0];
+        it->name = root->opts[0].short_name != NULL ?
+            root->opts[0].short_name : root->opts[0].short_name;
+    }
+}
+
+int _sarg_iterator_has_next(sarg_iterator *it)
+{
+    return it->idx < it->root->opt_len;
+}
+
+void _sarg_iterator_next(sarg_iterator *it)
+{
+    int i = ++(it->idx);
+    if(i < it->root->opt_len)
+    {
+        it->result = &it->root->results[i];
+        it->name = it->root->opts[i].short_name != NULL ?
+            it->root->opts[i].short_name : it->root->opts[i].long_name;
+    }
+}
 
 const char * sarg_strerror(const int errval)
 {

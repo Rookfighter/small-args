@@ -429,6 +429,52 @@ CTEST2(parsing, parse_fail)
     ASSERT_EQUAL(SARG_ERR_NOTFOUND, ret);
 }
 
+CTEST2(parsing, foreach)
+{
+    sarg_iterator it;
+    int count;
+    char *test_argv[8] = {"myapp", "--prob", "0.1", "-f", "myfile", "--count", "10", "-q"};
+
+    int ret = sarg_parse(&data->root, (const char **) test_argv, 8);
+    ASSERT_EQUAL(SARG_ERR_SUCCESS, ret);
+
+    count = 0;
+    sarg_foreach(&data->root, &it)
+    {
+        ++count;
+        if(!strcmp("i", it.name))
+        {
+            ASSERT_EQUAL(0,  it.result->count);
+        }
+        else if (!strcmp("n", it.name))
+        {
+            ASSERT_EQUAL(1,  it.result->count);
+            ASSERT_EQUAL(10,  it.result->int_val);
+        }
+        else if (!strcmp("prob", it.name))
+        {
+            ASSERT_EQUAL(1,  it.result->count);
+            ASSERT_DBL_NEAR(0.1,  it.result->double_val);
+        }
+        else if (!strcmp("f", it.name))
+        {
+            ASSERT_EQUAL(1, it.result->count);
+            ASSERT_STR("myfile",  it.result->str_val);
+        }
+        else if (!strcmp("q", it.name))
+        {
+            ASSERT_EQUAL(1,  it.result->count);
+            ASSERT_TRUE( it.result->bool_val);
+        }
+        else
+        {
+            // never reach this point
+            ASSERT_TRUE(0);
+        }
+    }
+    ASSERT_EQUAL(5, count);
+}
+
 CTEST_TEARDOWN(parsing)
 {
     _sarg_result_destroy(&data->result);
