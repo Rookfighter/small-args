@@ -8,4 +8,5 @@ mkdir build
 cd build
 cmake ..
 make
-./sarg_test_c
+cd ..
+./build/sarg_test_c
