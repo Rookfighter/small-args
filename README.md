@@ -50,7 +50,7 @@ int main(const int argc, const char **argv)
 	sarg_root root;
 	int ret;
 
-	ret = sarg_init(&root, my_opts);
+	ret = sarg_init(&root, my_opts, "program-name");
 	// handle error ...
 
 	ret = sarg_parse(&root, argv, argc);
